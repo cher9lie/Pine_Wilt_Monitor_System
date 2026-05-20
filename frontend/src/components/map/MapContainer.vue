@@ -26,10 +26,8 @@ let map: Map | null = null
 const DEMO_OFFSET_DISTANCE_KM = 30
 const DEMO_OFFSET_BEARING_DEG = 135
 const DEMO_BASE_CENTER: [number, number] = [114.935, 25.831]
-const EARTH_RADIUS_METERS = 6371000
 const DEG_TO_RAD = Math.PI / 180
-const FULL_CIRCLE_DEG = 360
-const HALF_CIRCLE_DEG = 180
+const KM_PER_DEG_LAT = 111
 const DEMO_ZONES: { name: string; coordinates: [number, number][][] }[] = [
   {
     name: '章贡区水西松林监测区',
@@ -571,32 +569,16 @@ function offsetPolygon(coordinates: [number, number][][]): [number, number][][] 
 }
 
 /**
- * 采用球面测地线终点公式，将经纬度按指定方位与距离偏移。
+ * 采用简化经纬度换算，将经纬度按指定方位与距离偏移。
  */
 function offsetLngLat([lng, lat]: [number, number]): [number, number] {
-  const distanceMeters = DEMO_OFFSET_DISTANCE_KM * 1000
   const bearingRad = DEMO_OFFSET_BEARING_DEG * DEG_TO_RAD
   const latRad = lat * DEG_TO_RAD
-  const lngRad = lng * DEG_TO_RAD
-  const angularDistance = distanceMeters / EARTH_RADIUS_METERS
-  const sinLat = Math.sin(latRad)
-  const cosLat = Math.cos(latRad)
-  const sinAngular = Math.sin(angularDistance)
-  const cosAngular = Math.cos(angularDistance)
-  // 目标纬度（球面测地线终点公式）
-  const sinLat2 = sinLat * cosAngular + cosLat * sinAngular * Math.cos(bearingRad)
-  const lat2 = Math.asin(sinLat2)
-  const y = Math.sin(bearingRad) * sinAngular * cosLat
-  const x = cosAngular - sinLat * sinLat2
-  // 目标经度（结合起点经度）
-  const lng2 = lngRad + Math.atan2(y, x)
-  return [normalizeLng((lng2 * 180) / Math.PI), (lat2 * 180) / Math.PI]
-}
-
-function normalizeLng(lngDeg: number): number {
-  // 先包裹到 [0, 360) 再平移到 [-180, 180)
-  const wrapped = ((lngDeg + HALF_CIRCLE_DEG) % FULL_CIRCLE_DEG + FULL_CIRCLE_DEG) % FULL_CIRCLE_DEG
-  return wrapped - HALF_CIRCLE_DEG
+  const deltaNorthKm = DEMO_OFFSET_DISTANCE_KM * Math.cos(bearingRad)
+  const deltaEastKm = DEMO_OFFSET_DISTANCE_KM * Math.sin(bearingRad)
+  const deltaLat = deltaNorthKm / KM_PER_DEG_LAT
+  const deltaLng = deltaEastKm / (KM_PER_DEG_LAT * Math.cos(latRad))
+  return [lng + deltaLng, lat + deltaLat]
 }
 
 // 暴露方法给父组件
