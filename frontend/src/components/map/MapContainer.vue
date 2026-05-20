@@ -405,6 +405,8 @@ watch(
 // ── 赣州示例数据：监测区多边形 + 病木黄色点 ─────────────────────
 const DEMO_SHIFT_DISTANCE_KM = 30
 const DEMO_SHIFT_BEARING_DEG = 135
+const DEG_TO_RAD = Math.PI / 180
+const KM_PER_DEG_LAT = 111.32 // 约等于赤道处每一纬度对应的公里数
 
 const DEMO_ZONES = [
   { minLng: 114.905, maxLng: 114.958, minLat: 25.810, maxLat: 25.858, count: 38 },
@@ -452,10 +454,9 @@ const DEMO_CENTER = (() => {
 })()
 
 const DEMO_SHIFT = (() => {
-  const bearingRad = (DEMO_SHIFT_BEARING_DEG * Math.PI) / 180
-  const kmPerDegLat = 111.32
-  const deltaLat = (DEMO_SHIFT_DISTANCE_KM * Math.cos(bearingRad)) / kmPerDegLat
-  const deltaLng = (DEMO_SHIFT_DISTANCE_KM * Math.sin(bearingRad)) / (kmPerDegLat * Math.cos(DEMO_CENTER.lat * Math.PI / 180))
+  const bearingRad = DEMO_SHIFT_BEARING_DEG * DEG_TO_RAD
+  const deltaLat = (DEMO_SHIFT_DISTANCE_KM * Math.cos(bearingRad)) / KM_PER_DEG_LAT
+  const deltaLng = (DEMO_SHIFT_DISTANCE_KM * Math.sin(bearingRad)) / (KM_PER_DEG_LAT * Math.cos(DEMO_CENTER.lat * DEG_TO_RAD))
   return { deltaLng, deltaLat }
 })()
 
