@@ -29,7 +29,6 @@ const DEMO_BASE_CENTER: [number, number] = [114.935, 25.831]
 const EARTH_RADIUS_METERS = 6371008.8
 const FULL_CIRCLE_DEG = 360
 const HALF_CIRCLE_DEG = 180
-const NORMALIZE_LNG_OFFSET = FULL_CIRCLE_DEG + HALF_CIRCLE_DEG
 const DEMO_ZONES: { name: string; coordinates: [number, number][][] }[] = [
   {
     name: '章贡区水西松林监测区',
@@ -567,6 +566,9 @@ function offsetPolygon(coordinates: [number, number][][]): [number, number][][] 
   return coordinates.map(ring => ring.map(offsetLngLat))
 }
 
+/**
+ * 采用球面测地线终点公式，将经纬度按指定方位与距离偏移。
+ */
 function offsetLngLat([lng, lat]: [number, number]): [number, number] {
   const distanceMeters = DEMO_OFFSET_DISTANCE_KM * 1000
   const bearingRad = (DEMO_OFFSET_BEARING_DEG * Math.PI) / 180
@@ -582,8 +584,12 @@ function offsetLngLat([lng, lat]: [number, number]): [number, number] {
   const y = Math.sin(bearingRad) * sinAngular * cosLat
   const x = cosAngular - sinLat * sinLat2
   const lng2 = lngRad + Math.atan2(y, x)
-  const normalizedLng = ((lng2 * 180) / Math.PI + NORMALIZE_LNG_OFFSET) % FULL_CIRCLE_DEG - HALF_CIRCLE_DEG
-  return [normalizedLng, (lat2 * 180) / Math.PI]
+  return [normalizeLng((lng2 * 180) / Math.PI), (lat2 * 180) / Math.PI]
+}
+
+function normalizeLng(lngDeg: number): number {
+  const wrapped = ((lngDeg + HALF_CIRCLE_DEG) % FULL_CIRCLE_DEG + FULL_CIRCLE_DEG) % FULL_CIRCLE_DEG
+  return wrapped - HALF_CIRCLE_DEG
 }
 
 // 暴露方法给父组件
