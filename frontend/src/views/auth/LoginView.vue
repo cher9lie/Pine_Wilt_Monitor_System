@@ -8,8 +8,8 @@
         <span class="top-subtitle">松材线虫监测预警平台</span>
       </div>
       <div class="top-right">
-        <span class="top-link">平台简介</span>
-        <span class="top-link">技术支持</span>
+        <span class="top-link" @click="showAbout = true">平台简介</span>
+        <span class="top-link" @click="showSupport = true">技术支持</span>
       </div>
     </header>
 
@@ -104,6 +104,61 @@
         <span>service@pinewilt-guard.cn</span>
       </div>
     </footer>
+
+    <!-- ══════ 平台简介弹窗 ══════ -->
+    <div v-if="showAbout" class="modal-overlay" @click.self="showAbout = false">
+      <div class="modal-card">
+        <div class="modal-header">
+          <img src="/logo.png" alt="logo" class="modal-logo" />
+          <div>
+            <h2 class="modal-title">松海护航</h2>
+            <p class="modal-subtitle">松材线虫监测预警平台</p>
+          </div>
+          <button class="modal-close" @click="showAbout = false">✕</button>
+        </div>
+        <div class="modal-body">
+          <div class="about-section">
+            <h4>平台概述</h4>
+            <p>松海护航是一套面向林业主管部门、护林员、科研院所和政府部门的全栈 Web GIS 智能监测预警平台。系统以空天地一体化数据采集为基础，融合深度学习遥感识别、RBAC 空间权限管控和全链条业务闭环，为松材线虫病的早期发现、精准定位和高效处置提供技术支撑。</p>
+          </div>
+          <div class="about-features">
+            <div class="af-item"><span class="af-icon">🛰️</span><div><strong>多源遥感监测</strong><p>支持高分二号、Sentinel-2、无人机DOM等多源影像接入，实现大范围松林健康状态周期性普查。</p></div></div>
+            <div class="af-item"><span class="af-icon">🤖</span><div><strong>AI 智能识别</strong><p>基于 YOLOv8 深度学习模型，实现单木级变色树冠实例分割，识别精度达 91%+，支持 ARM64 CPU 部署。</p></div></div>
+            <div class="af-item"><span class="af-icon">🗺️</span><div><strong>空间态势大屏</strong><p>MapLibre GL JS 驱动的 WebGIS 大屏，实时展示疫木分布、预警等级、巡查轨迹和处置进度。</p></div></div>
+            <div class="af-item"><span class="af-icon">🔐</span><div><strong>多级权限管控</strong><p>基于 RBAC 的五层权限体系，支持林场管理员、护林员、林业局领导等 15 种角色的精细化权限隔离。</p></div></div>
+            <div class="af-item"><span class="af-icon">📋</span><div><strong>全链条业务闭环</strong><p>从预警发现到工单派发、现场核查、处置验收，实现松材线虫病防治全流程数字化管理。</p></div></div>
+            <div class="af-item"><span class="af-icon">📊</span><div><strong>智能报告生成</strong><p>自动生成周报、月报、年鉴，支持地图集制作和多维财务审计，大幅降低人工统计工作量。</p></div></div>
+          </div>
+          <div class="about-version">
+            <span>版本：v1.0.0</span>
+            <span>|</span>
+            <span>部署架构：ARM64 aarch64</span>
+            <span>|</span>
+            <span>数据库：PostgreSQL 15 + PostGIS 3.4</span>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- ══════ 技术支持弹窗 ══════ -->
+    <div v-if="showSupport" class="modal-overlay" @click.self="showSupport = false">
+      <div class="modal-card modal-card-sm">
+        <div class="modal-header">
+          <h2 class="modal-title">技术支持</h2>
+          <button class="modal-close" @click="showSupport = false">✕</button>
+        </div>
+        <div class="modal-body">
+          <div class="support-list">
+            <div class="sl-item"><span class="sl-icon">📞</span><div><strong>服务热线</strong><p>400-8888-6789（工作日 9:00–18:00）</p></div></div>
+            <div class="sl-item"><span class="sl-icon">📧</span><div><strong>技术邮箱</strong><p>service@pinewilt-guard.cn</p></div></div>
+            <div class="sl-item"><span class="sl-icon">🏢</span><div><strong>运营单位</strong><p>松海护航（赣州）生态科技有限公司</p></div></div>
+            <div class="sl-item"><span class="sl-icon">📍</span><div><strong>地址</strong><p>江西省赣州市章贡区林业科技园 A栋 8楼</p></div></div>
+            <div class="sl-item"><span class="sl-icon">📖</span><div><strong>用户手册</strong><p>登录后点击右上角「帮助」查看完整操作文档</p></div></div>
+            <div class="sl-item"><span class="sl-icon">🔧</span><div><strong>系统维护</strong><p>每周日 02:00–04:00 为例行维护时间，期间服务可能短暂中断</p></div></div>
+          </div>
+        </div>
+      </div>
+    </div>
   </div>
 </template>
 
@@ -133,6 +188,8 @@ function switchVideo() {
 
 // ── 表单逻辑 ─────────────────────────────────────────────────
 const form = reactive({ username: '', password: '' })
+const showAbout = ref(false)
+const showSupport = ref(false)
 
 const demoAccounts = [
   { username: 'admin',      password: 'Admin@2024', label: '系统管理员' },
@@ -459,4 +516,87 @@ onMounted(() => {
 :deep(.el-form-item__error) {
   color: #e53935;
 }
+
+/* ══════ 弹窗样式（与首页深色主题一致）══════ */
+.modal-overlay {
+  position: fixed;
+  inset: 0;
+  background: rgba(0, 0, 0, 0.65);
+  z-index: 1000;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  backdrop-filter: blur(4px);
+}
+
+.modal-card {
+  background: #0f1629;
+  border: 1px solid #1e3a5f;
+  border-radius: 10px;
+  width: 680px;
+  max-width: 92vw;
+  max-height: 85vh;
+  overflow-y: auto;
+  box-shadow: 0 20px 60px rgba(0, 0, 0, 0.5);
+}
+
+.modal-card-sm { width: 480px; }
+
+.modal-header {
+  display: flex;
+  align-items: center;
+  gap: 14px;
+  padding: 20px 24px 16px;
+  border-bottom: 1px solid #1e3a5f;
+  position: sticky;
+  top: 0;
+  background: #0f1629;
+  z-index: 1;
+}
+
+.modal-logo { width: 40px; height: 40px; object-fit: contain; }
+
+.modal-title {
+  font-size: 20px;
+  font-weight: 700;
+  color: #00d4ff;
+  text-shadow: 0 0 12px rgba(0, 212, 255, 0.4);
+}
+
+.modal-subtitle { font-size: 12px; color: #8bacc8; margin-top: 2px; }
+
+.modal-close {
+  margin-left: auto;
+  background: transparent;
+  border: none;
+  color: #4a6a8a;
+  font-size: 18px;
+  cursor: pointer;
+  padding: 4px 8px;
+  border-radius: 4px;
+  transition: color 0.2s;
+}
+.modal-close:hover { color: #e8f4fd; }
+
+.modal-body { padding: 20px 24px 24px; }
+
+/* 平台简介 */
+.about-section { margin-bottom: 18px; }
+.about-section h4 { font-size: 14px; font-weight: 600; color: #00d4ff; margin-bottom: 8px; }
+.about-section p { font-size: 13px; color: #8bacc8; line-height: 1.7; }
+
+.about-features { display: grid; grid-template-columns: 1fr 1fr; gap: 12px; margin-bottom: 18px; }
+.af-item { display: flex; gap: 10px; padding: 12px; background: #141e35; border: 1px solid #1e3a5f; border-radius: 6px; }
+.af-icon { font-size: 22px; flex-shrink: 0; }
+.af-item strong { font-size: 13px; color: #e8f4fd; display: block; margin-bottom: 4px; }
+.af-item p { font-size: 12px; color: #8bacc8; line-height: 1.5; margin: 0; }
+
+.about-version { display: flex; gap: 12px; font-size: 11px; color: #4a6a8a; padding-top: 12px; border-top: 1px solid #1e3a5f; }
+
+/* 技术支持 */
+.support-list { display: flex; flex-direction: column; gap: 12px; }
+.sl-item { display: flex; gap: 12px; padding: 12px; background: #141e35; border: 1px solid #1e3a5f; border-radius: 6px; }
+.sl-icon { font-size: 22px; flex-shrink: 0; }
+.sl-item strong { font-size: 13px; color: #e8f4fd; display: block; margin-bottom: 3px; }
+.sl-item p { font-size: 12px; color: #8bacc8; margin: 0; }
 </style>

@@ -77,8 +77,8 @@ onMounted(() => {
   map = new maplibregl.Map({
     container: mapEl.value,
     style: BASEMAP_STYLES.satellite,
-    center: [113.0, 23.7],  // 默认中心：广东省中部（松材线虫高发区）
-    zoom: 7,
+    center: [114.935, 25.831],  // 赣州市章贡区中心
+    zoom: 11,
     minZoom: 3,
     maxZoom: 20,
     attributionControl: false,
@@ -94,6 +94,7 @@ onMounted(() => {
 
   map.on('load', () => {
     initBusinessLayers()
+    initDemoLayers()   // 赣州示例数据
     mapStore.setMap(map!)
   })
 })
@@ -400,6 +401,150 @@ watch(
     map.setLayoutProperty('image-bbox-outline', 'visibility', vis)
   }
 )
+
+// ── 赣州示例数据：监测区多边形 + 病木黄色点 ─────────────────────
+function initDemoLayers() {
+  if (!map) return
+
+  // 赣州市章贡区郊区松林监测区多边形（半透明绿色）
+  map.addSource('demo-zone', {
+    type: 'geojson',
+    data: {
+      type: 'FeatureCollection',
+      features: [
+        {
+          type: 'Feature',
+          geometry: {
+            type: 'Polygon',
+            coordinates: [[
+              [114.908, 25.852], [114.932, 25.858], [114.951, 25.847],
+              [114.958, 25.831], [114.948, 25.815], [114.927, 25.809],
+              [114.908, 25.818], [114.901, 25.835], [114.908, 25.852],
+            ]],
+          },
+          properties: { name: '章贡区水西松林监测区' },
+        },
+        {
+          type: 'Feature',
+          geometry: {
+            type: 'Polygon',
+            coordinates: [[
+              [114.962, 25.862], [114.978, 25.869], [114.991, 25.861],
+              [114.994, 25.848], [114.983, 25.839], [114.967, 25.843],
+              [114.960, 25.852], [114.962, 25.862],
+            ]],
+          },
+          properties: { name: '章贡区东部林场监测区' },
+        },
+      ],
+    },
+  })
+
+  map.addLayer({
+    id: 'demo-zone-fill',
+    type: 'fill',
+    source: 'demo-zone',
+    paint: {
+      'fill-color': '#00e676',
+      'fill-opacity': 0.18,
+    },
+  })
+
+  map.addLayer({
+    id: 'demo-zone-outline',
+    type: 'line',
+    source: 'demo-zone',
+    paint: {
+      'line-color': '#00e676',
+      'line-width': 2,
+      'line-opacity': 0.7,
+      'line-dasharray': [3, 2],
+    },
+  })
+
+  // 随机生成病木黄色点（在多边形范围内）
+  const demoPoints = generateDemoPoints()
+  map.addSource('demo-disease-points', {
+    type: 'geojson',
+    data: { type: 'FeatureCollection', features: demoPoints },
+  })
+
+  map.addLayer({
+    id: 'demo-disease-points-layer',
+    type: 'circle',
+    source: 'demo-disease-points',
+    paint: {
+      'circle-color': '#ffeb3b',
+      'circle-radius': [
+        'interpolate', ['linear'], ['zoom'],
+        10, 3, 14, 6, 18, 10,
+      ],
+      'circle-opacity': 0.85,
+      'circle-stroke-width': 1,
+      'circle-stroke-color': '#ff9800',
+      'circle-stroke-opacity': 0.6,
+    },
+  })
+
+  // 点击病木点弹窗
+  map.on('click', 'demo-disease-points-layer', (e) => {
+    if (!e.features?.length) return
+    const props = e.features[0].properties
+    const coords = (e.features[0].geometry as GeoJSON.Point).coordinates as [number, number]
+    new maplibregl.Popup({ className: 'disease-popup', maxWidth: '240px' })
+      .setLngLat(coords)
+      .setHTML(`
+        <div class="popup-content">
+          <div class="popup-title">🌲 疑似病死木（示例）</div>
+          <div class="popup-row"><span class="popup-label">类型</span><span class="popup-value">${props?.type_label ?? '变色木'}</span></div>
+          <div class="popup-row"><span class="popup-label">置信度</span><span class="popup-value">${props?.confidence ?? '87.3'}%</span></div>
+          <div class="popup-row"><span class="popup-label">来源</span><span class="popup-value">示例演示数据</span></div>
+        </div>
+      `)
+      .addTo(map!)
+  })
+
+  map.on('mouseenter', 'demo-disease-points-layer', () => {
+    if (map) map.getCanvas().style.cursor = 'pointer'
+  })
+  map.on('mouseleave', 'demo-disease-points-layer', () => {
+    if (map) map.getCanvas().style.cursor = ''
+  })
+}
+
+// 在赣州郊区多边形范围内随机生成病木点
+function generateDemoPoints(): GeoJSON.Feature[] {
+  const types = [
+    { type: 'discolored', label: '变色木', conf: () => (82 + Math.random() * 12).toFixed(1) },
+    { type: 'dead_tree',  label: '枯死木', conf: () => (88 + Math.random() * 10).toFixed(1) },
+    { type: 'suspected',  label: '疑似',   conf: () => (65 + Math.random() * 20).toFixed(1) },
+  ]
+
+  // 两个区域的边界框
+  const zones = [
+    { minLng: 114.905, maxLng: 114.958, minLat: 25.810, maxLat: 25.858, count: 38 },
+    { minLng: 114.960, maxLng: 114.994, minLat: 25.839, maxLat: 25.869, count: 22 },
+  ]
+
+  const features: GeoJSON.Feature[] = []
+  zones.forEach(zone => {
+    for (let i = 0; i < zone.count; i++) {
+      const lng = zone.minLng + Math.random() * (zone.maxLng - zone.minLng)
+      const lat = zone.minLat + Math.random() * (zone.maxLat - zone.minLat)
+      const t = types[Math.floor(Math.random() * types.length)]
+      features.push({
+        type: 'Feature',
+        geometry: { type: 'Point', coordinates: [lng, lat] },
+        properties: {
+          type: t.type,
+          type_label: t.label,
+          confidence: t.conf(),
+        },
+      })
+    }
+  })
+  return features
+}
 
 // 暴露方法给父组件
 defineExpose({ loadDetections, clearLayers, flyTo })
