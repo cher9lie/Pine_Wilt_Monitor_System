@@ -26,7 +26,8 @@ let map: Map | null = null
 const DEMO_OFFSET_DISTANCE_KM = 30
 const DEMO_OFFSET_BEARING_DEG = 135
 const DEMO_BASE_CENTER: [number, number] = [114.935, 25.831]
-const EARTH_RADIUS_METERS = 6371008.8
+const EARTH_RADIUS_METERS = 6371000
+const DEG_TO_RAD = Math.PI / 180
 const FULL_CIRCLE_DEG = 360
 const HALF_CIRCLE_DEG = 180
 const DEMO_ZONES: { name: string; coordinates: [number, number][][] }[] = [
@@ -562,6 +563,9 @@ function generateDemoPoints(): GeoJSON.Feature[] {
   return features
 }
 
+/**
+ * 对 GeoJSON Polygon 的多环坐标进行统一偏移。
+ */
 function offsetPolygon(coordinates: [number, number][][]): [number, number][][] {
   return coordinates.map(ring => ring.map(offsetLngLat))
 }
@@ -571,9 +575,9 @@ function offsetPolygon(coordinates: [number, number][][]): [number, number][][] 
  */
 function offsetLngLat([lng, lat]: [number, number]): [number, number] {
   const distanceMeters = DEMO_OFFSET_DISTANCE_KM * 1000
-  const bearingRad = (DEMO_OFFSET_BEARING_DEG * Math.PI) / 180
-  const latRad = (lat * Math.PI) / 180
-  const lngRad = (lng * Math.PI) / 180
+  const bearingRad = DEMO_OFFSET_BEARING_DEG * DEG_TO_RAD
+  const latRad = lat * DEG_TO_RAD
+  const lngRad = lng * DEG_TO_RAD
   const angularDistance = distanceMeters / EARTH_RADIUS_METERS
   const sinLat = Math.sin(latRad)
   const cosLat = Math.cos(latRad)
