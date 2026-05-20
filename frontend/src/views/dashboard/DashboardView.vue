@@ -203,7 +203,7 @@ const suspectedCount = computed(() => {
 })
 
 function resetView() {
-  mapRef.value?.flyTo(114.935, 25.831, 11)  // 赣州市章贡区
+  mapRef.value?.flyToDemoCenter()
 }
 
 function clearAll() {

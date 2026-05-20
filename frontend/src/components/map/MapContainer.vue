@@ -23,6 +23,30 @@ const mapEl = ref<HTMLDivElement>()
 const mapStore = useMapStore()
 let map: Map | null = null
 
+const DEMO_OFFSET_DISTANCE_KM = 30
+const DEMO_OFFSET_BEARING_DEG = 135
+const DEMO_BASE_CENTER: [number, number] = [114.935, 25.831]
+const DEG_TO_RAD = Math.PI / 180
+const KM_PER_DEG_LAT = 111 // Approx km per degree latitude (≈110.6–111.7)
+const DEMO_ZONES: { name: string; coordinates: [number, number][][] }[] = [
+  {
+    name: '章贡区水西松林监测区',
+    coordinates: [[
+      [114.908, 25.852], [114.932, 25.858], [114.951, 25.847],
+      [114.958, 25.831], [114.948, 25.815], [114.927, 25.809],
+      [114.908, 25.818], [114.901, 25.835], [114.908, 25.852],
+    ]],
+  },
+  {
+    name: '章贡区东部林场监测区',
+    coordinates: [[
+      [114.962, 25.862], [114.978, 25.869], [114.991, 25.861],
+      [114.994, 25.848], [114.983, 25.839], [114.967, 25.843],
+      [114.960, 25.852], [114.962, 25.862],
+    ]],
+  },
+]
+
 // ── 底图样式定义 ──────────────────────────────────────────────
 const BASEMAP_STYLES = {
   satellite: {
@@ -77,7 +101,7 @@ onMounted(() => {
   map = new maplibregl.Map({
     container: mapEl.value,
     style: BASEMAP_STYLES.satellite,
-    center: [114.935, 25.831],  // 赣州市章贡区中心
+    center: offsetLngLat(DEMO_BASE_CENTER),  // 赣州市章贡区中心（整体东南偏移）
     zoom: 11,
     minZoom: 3,
     maxZoom: 20,
@@ -370,6 +394,14 @@ function flyTo(lng: number, lat: number, zoom = 12) {
   map?.flyTo({ center: [lng, lat], zoom, duration: 1500 })
 }
 
+/**
+ * 飞越到示例中心点（整体东南偏移）
+ */
+function flyToDemoCenter(zoom = 11) {
+  const [lng, lat] = offsetLngLat(DEMO_BASE_CENTER)
+  map?.flyTo({ center: [lng, lat], zoom, duration: 1500 })
+}
+
 // 监听 store 中的推理结果变化，自动更新地图
 watch(
   () => mapStore.inferResult,
@@ -411,32 +443,14 @@ function initDemoLayers() {
     type: 'geojson',
     data: {
       type: 'FeatureCollection',
-      features: [
-        {
-          type: 'Feature',
-          geometry: {
-            type: 'Polygon',
-            coordinates: [[
-              [114.908, 25.852], [114.932, 25.858], [114.951, 25.847],
-              [114.958, 25.831], [114.948, 25.815], [114.927, 25.809],
-              [114.908, 25.818], [114.901, 25.835], [114.908, 25.852],
-            ]],
-          },
-          properties: { name: '章贡区水西松林监测区' },
+      features: DEMO_ZONES.map(zone => ({
+        type: 'Feature',
+        geometry: {
+          type: 'Polygon',
+          coordinates: offsetPolygon(zone.coordinates),
         },
-        {
-          type: 'Feature',
-          geometry: {
-            type: 'Polygon',
-            coordinates: [[
-              [114.962, 25.862], [114.978, 25.869], [114.991, 25.861],
-              [114.994, 25.848], [114.983, 25.839], [114.967, 25.843],
-              [114.960, 25.852], [114.962, 25.862],
-            ]],
-          },
-          properties: { name: '章贡区东部林场监测区' },
-        },
-      ],
+        properties: { name: zone.name },
+      })),
     },
   })
 
@@ -531,10 +545,11 @@ function generateDemoPoints(): GeoJSON.Feature[] {
     for (let i = 0; i < zone.count; i++) {
       const lng = zone.minLng + Math.random() * (zone.maxLng - zone.minLng)
       const lat = zone.minLat + Math.random() * (zone.maxLat - zone.minLat)
+      const [offsetLng, offsetLat] = offsetLngLat([lng, lat])
       const t = types[Math.floor(Math.random() * types.length)]
       features.push({
         type: 'Feature',
-        geometry: { type: 'Point', coordinates: [lng, lat] },
+        geometry: { type: 'Point', coordinates: [offsetLng, offsetLat] },
         properties: {
           type: t.type,
           type_label: t.label,
@@ -546,8 +561,30 @@ function generateDemoPoints(): GeoJSON.Feature[] {
   return features
 }
 
+/**
+ * 对 GeoJSON Polygon 的多环坐标进行统一偏移。
+ */
+function offsetPolygon(coordinates: [number, number][][]): [number, number][][] {
+  return coordinates.map(ring => ring.map(offsetLngLat))
+}
+
+/**
+ * 采用简化经纬度换算，将经纬度按指定方位与距离偏移。
+ * 注意：该方法假设局部平面，适用于小范围近似偏移。
+ */
+function offsetLngLat([lng, lat]: [number, number]): [number, number] {
+  const bearingRad = DEMO_OFFSET_BEARING_DEG * DEG_TO_RAD
+  const latRad = lat * DEG_TO_RAD
+  const deltaNorthKm = DEMO_OFFSET_DISTANCE_KM * Math.cos(bearingRad)
+  const deltaEastKm = DEMO_OFFSET_DISTANCE_KM * Math.sin(bearingRad)
+  const deltaLat = deltaNorthKm / KM_PER_DEG_LAT
+  const kmPerDegLon = KM_PER_DEG_LAT * Math.cos(latRad)
+  const deltaLng = deltaEastKm / kmPerDegLon
+  return [lng + deltaLng, lat + deltaLat]
+}
+
 // 暴露方法给父组件
-defineExpose({ loadDetections, clearLayers, flyTo })
+defineExpose({ loadDetections, clearLayers, flyTo, flyToDemoCenter })
 
 // ── 工具函数 ──────────────────────────────────────────────────
 function getLabelText(label: string) {
