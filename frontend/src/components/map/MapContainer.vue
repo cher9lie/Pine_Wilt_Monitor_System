@@ -406,7 +406,7 @@ watch(
 const DEMO_SHIFT_DISTANCE_KM = 30
 const DEMO_SHIFT_BEARING_DEG = 135
 const DEG_TO_RAD = Math.PI / 180
-const KM_PER_DEG_LAT = 111.32 // 约等于每一纬度对应的公里数
+const KM_PER_DEG_LAT = 111.32 // 近似值，适用于演示用的简化换算
 
 const DEMO_ZONES = [
   { minLng: 114.905, maxLng: 114.958, minLat: 25.810, maxLat: 25.858, count: 38 },
@@ -454,10 +454,11 @@ const DEMO_CENTER = (() => {
 })()
 
 const DEMO_CENTER_LAT = DEMO_CENTER.lat
+const KM_PER_DEG_LNG = KM_PER_DEG_LAT * Math.cos(DEMO_CENTER_LAT * DEG_TO_RAD)
 const DEMO_SHIFT = (() => {
   const bearingRad = DEMO_SHIFT_BEARING_DEG * DEG_TO_RAD
   const deltaLat = (DEMO_SHIFT_DISTANCE_KM * Math.cos(bearingRad)) / KM_PER_DEG_LAT
-  const deltaLng = (DEMO_SHIFT_DISTANCE_KM * Math.sin(bearingRad)) / (KM_PER_DEG_LAT * Math.cos(DEMO_CENTER_LAT * DEG_TO_RAD))
+  const deltaLng = (DEMO_SHIFT_DISTANCE_KM * Math.sin(bearingRad)) / KM_PER_DEG_LNG
   return { deltaLng, deltaLat }
 })()
 
