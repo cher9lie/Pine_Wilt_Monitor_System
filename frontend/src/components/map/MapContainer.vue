@@ -27,7 +27,7 @@ const DEMO_OFFSET_DISTANCE_KM = 30
 const DEMO_OFFSET_BEARING_DEG = 135
 const DEMO_BASE_CENTER: [number, number] = [114.935, 25.831]
 const DEG_TO_RAD = Math.PI / 180
-const KM_PER_DEG_LAT = 111 // Approx km per degree latitude (≈110.6–111.7)
+const KM_PER_DEG_LAT = 111 // Approx km per degree latitude near 25.8°N (varies by latitude)
 const DEMO_ZONES: { name: string; coordinates: [number, number][][] }[] = [
   {
     name: '章贡区水西松林监测区',
@@ -578,7 +578,9 @@ function offsetLngLat([lng, lat]: [number, number]): [number, number] {
   const deltaNorthKm = DEMO_OFFSET_DISTANCE_KM * Math.cos(bearingRad)
   const deltaEastKm = DEMO_OFFSET_DISTANCE_KM * Math.sin(bearingRad)
   const deltaLat = deltaNorthKm / KM_PER_DEG_LAT
-  const kmPerDegLon = KM_PER_DEG_LAT * Math.cos(latRad)
+  const cosLat = Math.cos(latRad)
+  const safeCosLat = Math.abs(cosLat) < 1e-6 ? 1e-6 * Math.sign(cosLat || 1) : cosLat
+  const kmPerDegLon = KM_PER_DEG_LAT * safeCosLat
   const deltaLng = deltaEastKm / kmPerDegLon
   return [lng + deltaLng, lat + deltaLat]
 }
