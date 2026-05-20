@@ -1,0 +1,287 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>清远市松材线虫病灾害监测预警系统</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+            font-family: "Microsoft YaHei", sans-serif;
+        }
+        
+        body {
+            overflow: hidden;
+        }
+        
+        .header {
+            background-color: #0a6aa1;
+            color: white;
+            height: 70px;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            padding: 0 20px;
+            background-image: linear-gradient(to right, #0a6aa1, #0a6aa1 70%, #0a6aa1), 
+                              url('data:image/svg+xml;utf8,<svg xmlns="http://www.w3.org/2000/svg" width="100%" height="100%"><path d="M0,10 Q50,20 100,10 T200,10" stroke="%23ffffff20" fill="none" stroke-width="2"/><path d="M0,30 Q50,40 100,30 T200,30" stroke="%23ffffff20" fill="none" stroke-width="2"/></svg>');
+            background-size: cover;
+            position: relative;
+        }
+        
+        .header h1 {
+            font-size: 24px;
+            font-weight: bold;
+        }
+        
+        .user-info {
+            display: flex;
+            align-items: center;
+            gap: 10px;
+        }
+        
+        .user-info img {
+            width: 40px;
+            height: 40px;
+            border-radius: 50%;
+            background-color: #fff;
+        }
+        
+        .help-link {
+            margin-right: 20px;
+            color: #ccc;
+            text-decoration: none;
+        }
+        
+        .sidebar {
+            width: 60px;
+            background-color: #0a6aa1;
+            height: calc(100vh - 70px);
+            float: left;
+            color: white;
+            text-align: center;
+        }
+        
+        .sidebar-item {
+            padding: 15px 0;
+            cursor: pointer;
+            border-bottom: 1px solid rgba(255, 255, 255, 0.1);
+        }
+        
+        .sidebar-item.active {
+            background-color: #0c5a86;
+        }
+        
+        .main-content {
+            height: calc(100vh - 70px);
+            margin-left: 60px;
+            position: relative;
+            background-color: #f0f6fb;
+            background-image: url('image/底图3.png');
+        }
+        
+        .filter-container {
+            position: absolute;
+            top: 20px;
+            left: 20px;
+            width: 300px;
+            background-color: white;
+            border-radius: 4px;
+            box-shadow: 0 2px 10px rgba(0, 0, 0, 0.1);
+            padding: 15px;
+        }
+        
+        .filter-item {
+            margin-bottom: 15px;
+        }
+        
+        .filter-item label {
+            display: block;
+            margin-bottom: 5px;
+            font-size: 14px;
+            color: #333;
+        }
+        
+        .filter-item select,
+        .filter-item input {
+            width: 100%;
+            padding: 8px 10px;
+            border: 1px solid #ddd;
+            border-radius: 4px;
+            font-size: 14px;
+            color: #666;
+        }
+        
+        .confirm-btn {
+            width: 100%;
+            padding: 10px;
+            background-color: #1e88e5;
+            color: white;
+            border: none;
+            border-radius: 4px;
+            font-size: 14px;
+            cursor: pointer;
+            transition: background-color 0.3s;
+        }
+        
+        .confirm-btn:hover {
+            background-color: #1976d2;
+        }
+        
+        .map-container {
+            position: absolute;
+            top: 50%;
+            left: 55%;
+            transform: translate(-50%, -50%);
+            width: 70%;
+            height: 80%;
+            /* 这里预留地图位置，您可以自行设置背景图或添加地图组件 */
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 18px;
+        }
+        
+        /* 响应式设计 */
+        @media (max-width: 768px) {
+            .header h1 {
+                font-size: 18px;
+            }
+            
+            .filter-container {
+                width: 250px;
+            }
+            
+            .map-container {
+                width: 90%;
+                height: 60%;
+            }
+        }
+    </style>
+</head>
+<body>
+    <div class="header">
+        <h1>清远市松材线虫病灾害监测预警系统</h1>
+        <div class="user-info">
+            <a href="#" class="help-link" onclick="window.location.href='支持与帮助文档.html'">? 支持与帮助文档</a>
+            <img src="data:image/svg+xml;utf8,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><circle cx='50' cy='50' r='40' fill='%23ddd'/><circle cx='50' cy='40' r='15' fill='%23aaa'/><path d='M25,85 Q50,65 75,85' fill='%23aaa'/></svg>" alt="用户头像">
+            <span>用户321</span>
+        </div>
+    </div>
+    
+    <div class="sidebar">
+        <div class="sidebar-item" data-page="home"
+            onclick="window.location.href='首页.html'">
+            首<br>页
+        </div>
+        <div class="sidebar-item active" data-page="monitor"
+            onclick="window.location.href='监测页面A.html'">
+            灾<br>情<br>监<br>测
+        </div>
+        <div class="sidebar-item" data-page="evaluate"
+            onclick="window.location.href='灾情评估A.html'">
+            灾<br>情<br>评<br>估
+        </div>
+        <div class="sidebar-item" data-page="warning"
+            onclick="window.location.href='预警界面A.html'">
+            灾<br>情<br>预<br>警
+        </div>
+        <div class="sidebar-item" data-page="model"
+            onclick="window.location.href='大模型咨询.html'">
+            大<br>模<br>型<br>咨<br>询
+        </div>
+    </div>
+    
+    <div class="main-content">
+        <div class="filter-container">
+            <div class="filter-item">
+                <label for="date">请选择监测时间：</label>
+                <input type="date" id="date" name="date">
+            </div>
+            <div class="filter-item">
+                <label for="region">请选择县区：</label>
+                <select id="region" name="region">
+                    <option value="">请选择县区</option>
+                    <option value="清城区">清城区</option>
+                    <option value="清新区">清新区</option>
+                    <option value="佛冈县">佛冈县</option>
+                    <option value="阳山县">阳山县</option>
+                    <option value="连山县">连山县</option>
+                    <option value="连南县">连南县</option>
+                    <option value="英德市">英德市</option>
+                    <option value="连州市">连州市</option>
+                </select>
+            </div>
+            <button class="confirm-btn" id="confirmBtn" onclick="window.location.href='监测页面B.html'">确认</button>
+        </div>
+        
+        <div class="map-container" id="mapContainer">
+            <img src="image/监测图1.png" alt="地图图片" style="width: 50%; height: auto;">
+        </div>
+    </div>
+    
+    <script>
+        // 侧边栏点击事件
+        const sidebarItems = document.querySelectorAll('.sidebar-item');
+        sidebarItems.forEach(item => {
+            item.addEventListener('click', function() {
+                // 移除所有active类
+                sidebarItems.forEach(i => i.classList.remove('active'));
+                // 添加active类到当前点击项
+                this.classList.add('active');
+                
+                // 这里可以添加页面切换逻辑
+                const page = this.getAttribute('data-page');
+                console.log('切换到页面:', page);
+                
+                // 示例：根据不同页面可以做不同处理
+                if (page === 'home') {
+                    document.querySelector('.filter-container').style.display = 'block';
+                } else if (page === 'monitor') {
+                    document.querySelector('.filter-container').style.display = 'block';
+                } else {
+                    document.querySelector('.filter-container').style.display = 'block';
+                }
+            });
+        });
+        
+        // 确认按钮点击事件
+        document.getElementById('confirmBtn').addEventListener('click', function() {
+            const date = document.getElementById('date').value;
+            const region = document.getElementById('region').value;
+            
+            if (!date) {
+                alert('请选择监测时间');
+                return;
+            }
+            
+            if (!region) {
+                alert('请选择县区');
+                return;
+            }
+            
+            console.log('查询参数:', { date, region });
+            
+            // 这里可以添加查询逻辑，例如加载对应的地图数据
+            alert(`正在查询 ${region} 在 ${date} 的监测数据`);
+            
+            // 示例：更新地图容器内容
+            // 实际应用中，您可能需要调用地图API或加载地图图片
+            document.getElementById('mapContainer').innerHTML = `
+                <div style="text-align: center;">
+                    <div style="font-weight: bold; margin-bottom: 10px;">${region} - ${date} 监测数据</div>
+                    <div>地图加载中...</div>
+                </div>
+            `;
+        });
+        
+        // 初始化日期为今天
+        const today = new Date();
+        const year = today.getFullYear();
+        const month = String(today.getMonth() + 1).padStart(2, '0');
+        const day = String(today.getDate()).padStart(2, '0');
+        document.getElementById('date').value = `${year}-${month}-${day}`;
+    </script>
+</body>
+</html>

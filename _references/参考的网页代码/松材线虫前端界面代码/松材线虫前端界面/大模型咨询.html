@@ -1,0 +1,324 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>清远市松材线虫病灾害监测预警系统</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+            font-family: "Microsoft YaHei", sans-serif;
+        }
+        
+        body {
+            overflow: hidden;
+        }
+        
+        .header {
+            background-color: #0a6aa1;
+            color: white;
+            height: 70px;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            padding: 0 20px;
+            background-image: linear-gradient(to right, #0a6aa1, #0a6aa1 70%, #0a6aa1), 
+                              url('data:image/svg+xml;utf8,<svg xmlns="http://www.w3.org/2000/svg" width="100%" height="100%"><path d="M0,10 Q50,20 100,10 T200,10" stroke="%23ffffff20" fill="none" stroke-width="2"/><path d="M0,30 Q50,40 100,30 T200,30" stroke="%23ffffff20" fill="none" stroke-width="2"/></svg>');
+            background-size: cover;
+            position: relative;
+        }
+        
+        .header h1 {
+            font-size: 24px;
+            font-weight: bold;
+        }
+        
+        .user-info {
+            display: flex;
+            align-items: center;
+            gap: 10px;
+        }
+        
+        .user-info img {
+            width: 40px;
+            height: 40px;
+            border-radius: 50%;
+            background-color: #fff;
+        }
+        
+        .help-link {
+            margin-right: 20px;
+            color: #ccc;
+            text-decoration: none;
+        }
+        
+        .sidebar {
+            width: 60px;
+            background-color: #0a6aa1;
+            height: calc(100vh - 70px);
+            float: left;
+            color: white;
+            text-align: center;
+        }
+        
+        .sidebar-item {
+            padding: 15px 0;
+            cursor: pointer;
+            border-bottom: 1px solid rgba(255, 255, 255, 0.1);
+        }
+        
+        .sidebar-item.active {
+            background-color: #0c5a86;
+        }
+        
+        .main-content {
+            height: calc(100vh - 70px);
+            margin-left: 60px;
+            position: relative;
+            background-image: url(image/松问背景图.png);
+        }
+        
+        .breadcrumb {
+            padding: 10px 20px;
+            font-size: 14px;
+            color: #fff;
+            background-color: rgba(0, 0, 0, 0.2);
+        }
+        
+        .breadcrumb a {
+            color: #fff;
+            text-decoration: none;
+            margin-right: 10px;
+        }
+        
+        .remaining-count {
+            position: absolute;
+            top: 20px;
+            right: 20px;
+            background-color: rgba(255, 255, 255, 0.9);
+            padding: 8px 15px;
+            border-radius: 20px;
+            font-size: 16px;
+            color: #ff5722;
+            font-weight: bold;
+        }
+        
+        .chat-container {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            height: calc(100% - 50px);
+            padding: 20px;
+        }
+        
+        .welcome-title {
+            font-size: 60px;
+            font-weight: bold;
+            color: white;
+            text-shadow: 2px 2px 8px rgba(0, 0, 0, 0.5);
+            margin-bottom: 20px;
+            text-align: center;
+            position: absolute;
+            top: 140px;
+        }
+        
+        .welcome-subtitle {
+            font-size: 48px;
+            font-weight: bold;
+            color: white;
+            text-shadow: 2px 2px 8px rgba(0, 0, 0, 0.5);
+            margin-bottom: 60px;
+            text-align: center;
+        }
+        
+        .chat-input-container {
+            width: 80%;
+            max-width: 900px;
+            background-color: white;
+            border-radius: 10px;
+            padding: 20px;
+            box-shadow: 0 4px 20px rgba(0, 0, 0, 0.2);
+            position: absolute;
+            bottom: 10px;
+        }
+        
+        .chat-input {
+            width: 100%;
+            padding: 15px;
+            border: 1px solid #ddd;
+            border-radius: 5px;
+            font-size: 16px;
+            margin-bottom: 20px;
+            resize: none;
+        }
+        
+        .chat-actions {
+            display: flex;
+            justify-content: flex-end;
+            gap: 15px;
+        }
+        
+        .file-btn {
+            padding: 10px 15px;
+            background-color: #f5f5f5;
+            color: #333;
+            border: 1px solid #ddd;
+            border-radius: 5px;
+            font-size: 14px;
+            cursor: pointer;
+            transition: background-color 0.3s;
+        }
+        
+        .file-btn:hover {
+            background-color: #e0e0e0;
+        }
+        
+        .submit-btn {
+            padding: 10px 25px;
+            background-color: #1e88e5;
+            color: white;
+            border: none;
+            border-radius: 5px;
+            font-size: 14px;
+            cursor: pointer;
+            transition: background-color 0.3s;
+        }
+        
+        .submit-btn:hover {
+            background-color: #1976d2;
+        }
+    </style>
+</head>
+<body>
+    <div class="header">
+        <h1>清远市松材线虫病灾害监测预警系统</h1>
+        <div class="user-info">
+            <a href="#" class="help-link"onclick="window.location.href='支持与帮助文档.html'">? 支持与帮助文档</a>
+            <img src="data:image/svg+xml;utf8,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><circle cx='50' cy='50' r='40' fill='%23ddd'/><circle cx='50' cy='40' r='15' fill='%23aaa'/><path d='M25,85 Q50,65 75,85' fill='%23aaa'/></svg>" alt="用户头像">
+            <span>用户321</span>
+        </div>
+    </div>
+
+    <div class="sidebar">
+        <div class="sidebar-item" data-page="home"
+            onclick="window.location.href='首页.html'">
+            首<br>页
+        </div>
+        <div class="sidebar-item" data-page="monitor"
+            onclick="window.location.href='监测页面A.html'">
+            灾<br>情<br>监<br>测
+        </div>
+        <div class="sidebar-item" data-page="evaluate"
+            onclick="window.location.href='灾情评估A.html'">
+            灾<br>情<br>评<br>估
+        </div>
+        <div class="sidebar-item" data-page="warning"
+            onclick="window.location.href='预警界面A.html'">
+            灾<br>情<br>预<br>警
+        </div>
+        <div class="sidebar-item active" data-page="model"
+            onclick="window.location.href='大模型咨询.html'">
+            大<br>模<br>型<br>咨<br>询
+        </div>
+    </div>
+
+    <div class="main-content">
+        <div class="breadcrumb">
+            <a href="#">首页</a>
+            <a href="#">大模型咨询</a>
+            <span>当前页面</span>
+        </div>
+        
+        <div class="remaining-count">
+            剩余咨询次数: 10 次
+        </div>
+        
+        <div class="chat-container">
+            <h1 class="welcome-title">HI!这里是松问</h1>
+            <h2 class="welcome-subtitle">开始咨询吧!</h2>
+            
+            <div class="chat-input-container">
+                <textarea class="chat-input" rows="5" placeholder="请输入问题:"></textarea>
+                <div class="chat-actions">
+                    <button class="file-btn" id="fileBtn">选择导出相关文件</button>
+                    <button class="submit-btn" id="submitBtn">确认</button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        // 获取DOM元素
+        const fileBtn = document.getElementById('fileBtn');
+        const submitBtn = document.getElementById('submitBtn');
+        const chatInput = document.querySelector('.chat-input');
+        
+        // 文件选择按钮点击事件
+        fileBtn.addEventListener('click', function() {
+            // 创建一个隐藏的文件输入元素
+            const fileInput = document.createElement('input');
+            fileInput.type = 'file';
+            fileInput.accept = '.pdf,.doc,.docx,.xls,.xlsx,.jpg,.png';
+            fileInput.multiple = true;
+            fileInput.style.display = 'none';
+            
+            // 添加到DOM并触发点击
+            document.body.appendChild(fileInput);
+            fileInput.click();
+            
+            // 文件选择后的处理
+            fileInput.addEventListener('change', function() {
+                if (fileInput.files.length > 0) {
+                    let fileNames = '';
+                    for (let i = 0; i < fileInput.files.length; i++) {
+                        fileNames += fileInput.files[i].name + '\n';
+                    }
+                    alert('已选择文件:\n' + fileNames);
+                }
+                
+                // 清理DOM
+                document.body.removeChild(fileInput);
+            });
+        });
+        
+        // 提交按钮点击事件
+        submitBtn.addEventListener('click', function() {
+            const question = chatInput.value.trim();
+            if (question) {
+                // 这里可以添加提交问题的逻辑
+                alert('已提交问题: ' + question);
+                
+                // 清空输入框
+                chatInput.value = '';
+                
+                // 减少剩余咨询次数
+                const remainingCount = document.querySelector('.remaining-count');
+                const currentCount = parseInt(remainingCount.textContent.match(/\d+/)[0]);
+                if (currentCount > 0) {
+                    remainingCount.textContent = `剩余咨询次数: ${currentCount - 1} 次`;
+                }
+            } else {
+                alert('请输入问题');
+            }
+        });
+        
+        // 侧边栏点击事件
+        const sidebarItems = document.querySelectorAll('.sidebar-item');
+        sidebarItems.forEach(item => {
+            item.addEventListener('click', function() {
+                // 移除所有active类
+                sidebarItems.forEach(i => i.classList.remove('active'));
+                // 添加active类到当前点击项
+                this.classList.add('active');
+                
+                // 这里可以添加页面切换逻辑
+                const page = this.getAttribute('data-page');
+                console.log('切换到页面:', page);
+            });
+        });
+    </script>
+</body>
+</html>

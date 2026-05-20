@@ -1,0 +1,676 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>投诉处理详情系统</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+            font-family: "Microsoft YaHei", "PingFang SC", sans-serif;
+        }
+
+        body {
+            display: flex;
+            background-color: #f5f5f5;
+            color: #333;
+            min-height: 100vh;
+        }
+
+        /* 主侧边栏样式 (图标栏) */
+        .main-sidebar {
+            width: 60px;
+            background-color: #1e1e2f;
+            display: flex;
+            flex-direction: column;
+            color: #fff;
+            position: fixed;
+            height: 100vh;
+            z-index: 100;
+        }
+
+        .sidebar-logo {
+            padding: 15px 0;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            border-bottom: 1px solid rgba(255, 255, 255, 0.1);
+            position: relative; /* 确保 logo 可以使用 z-index */
+        }
+
+       .sidebar-logo img {
+            max-width: 30px;
+            max-height: 30px;
+            width: auto;
+            height: auto;
+            border-radius: 50%;
+            z-index: 101; /* 设置 z-index 使其处于顶层 */
+            position: relative; /* 确保 z-index 生效 */
+        }
+
+
+        .sidebar-item {
+            padding: 15px 0;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            cursor: pointer;
+            transition: background-color 0.3s;
+            position: relative;
+            color: #fff;
+            text-decoration: none;
+        }
+
+        .sidebar-item.active {
+            background-color: #3498db;
+        }
+
+        .sidebar-item:hover {
+            background-color: rgba(52, 152, 219, 0.7);
+            color: #fff;
+            text-decoration: none;
+        }
+
+        .sidebar-item i {
+            font-size: 20px;
+            margin-bottom: 5px;
+            color: #fff;
+            text-decoration: none;
+        }
+
+        .sidebar-item span {
+            font-size: 12px;
+            color: #fff;
+            text-decoration: none;
+        }
+        .sidebar-item a {
+        color: #fff; /* 添加这行代码，设置链接文字颜色为白色 */
+        text-decoration: none; /* 可以添加这行代码，去除链接的下划线 */
+        }
+
+        /* 次侧边栏样式 (功能栏) */
+        .sub-sidebar {
+            width: 120px;
+            background-color: #27293d;
+            color: #fff;
+            position: fixed;
+            left: 60px;
+            height: 100vh;
+            z-index: 99;
+            padding-top: 15px;
+        }
+
+        .sub-sidebar-title {
+            padding: 10px 15px;
+            font-size: 14px;
+            font-weight: 500;
+            border-bottom: 1px solid rgba(255, 255, 255, 0.1);
+            margin-bottom: 10px;
+            text-align: center;
+        }
+
+        .sub-sidebar-item {
+            padding: 12px 15px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            cursor: pointer;
+            transition: background-color 0.3s;
+            font-size: 14px;
+            color: #fff;
+            text-decoration: none;
+        }
+
+        .sub-sidebar-item.active {
+            background-color: rgba(52, 152, 219, 0.3);
+        }
+
+        .sub-sidebar-item:hover {
+            background-color: rgba(52, 152, 219, 0.2);
+        }
+
+        /* 主内容区域 */
+        .main-content {
+            flex: 1;
+            margin-left: 180px; /* 60px + 120px */
+            display: flex;
+            flex-direction: column;
+            min-height: 100vh;
+            padding: 20px;
+        }
+
+        /* 顶部导航栏 */
+        .top-nav {
+            background-color: #fff;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            padding: 0 20px;
+            height: 50px;
+            box-shadow: 0 1px 3px rgba(0, 0, 0, 0.1);
+            position: sticky;
+            top: 0;
+            z-index: 10;
+        }
+
+        .nav-tabs {
+            display: flex;
+            height: 100%;
+        }
+
+        .nav-tab {
+            padding: 0 15px;
+            display: flex;
+            align-items: center;
+            height: 100%;
+            cursor: pointer;
+            position: relative;
+            color: #666;
+        }
+
+        .nav-tab.active {
+            color: #3498db;
+            font-weight: 500;
+            border-bottom: 2px solid #3498db;
+        }
+
+        .nav-tab .close-icon {
+            margin-left: 5px;
+            font-size: 16px;
+        }
+
+        .nav-actions {
+            display: flex;
+            align-items: center;
+        }
+
+        .nav-action {
+            margin-left: 15px;
+            cursor: pointer;
+            position: relative;
+        }
+
+        .notification-badge {
+            position: absolute;
+            top: -5px;
+            right: -5px;
+            background-color: #e74c3c;
+            color: white;
+            border-radius: 50%;
+            width: 16px;
+            height: 16px;
+            font-size: 10px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+        }
+
+        .user-dropdown {
+            display: flex;
+            align-items: center;
+            cursor: pointer;
+            margin-left: 20px;
+        }
+
+        .user-dropdown i {
+            margin-left: 5px;
+            font-size: 12px;
+        }
+
+        /* 投诉处理区域 */
+        .complaint-tabs {
+            display: flex;
+            margin-bottom: 20px;
+            border-bottom: 1px solid #ddd;
+        }
+
+        .complaint-tab {
+            padding: 10px 20px;
+            cursor: pointer;
+            position: relative;
+            font-size: 14px;
+            color: #1e1e2f;
+            text-decoration: none;
+        }
+
+        .complaint-tab.active {
+            color: #3498db;
+            font-weight: 500;
+        }
+
+        .complaint-tab.active::after {
+            content: '';
+            position: absolute;
+            bottom: -1px;
+            left: 0;
+            width: 100%;
+            height: 2px;
+            background-color: #3498db;
+        }
+
+        .complaint-container {
+            display: flex;
+            background-color: #fff;
+            border-radius: 4px;
+            box-shadow: 0 1px 3px rgba(0, 0, 0, 0.1);
+            overflow: hidden;
+        }
+
+        .complaint-list {
+            width: 300px;
+            border-right: 1px solid #eee;
+            overflow-y: auto;
+            max-height: calc(100vh - 150px);
+        }
+
+        .complaint-detail {
+            flex: 1;
+            padding: 20px;
+        }
+
+        .add-complaint-btn {
+            background-color: #f0f8ff;
+            color: #3498db;
+            border: none;
+            border-radius: 4px;
+            padding: 8px 15px;
+            margin: 10px;
+            cursor: pointer;
+            font-size: 14px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+        }
+
+        .add-complaint-btn:hover {
+            background-color: #e6f4ff;
+        }
+
+        .add-complaint-btn i {
+            margin-right: 5px;
+            font-size: 16px;
+        }
+
+        .complaint-item {
+            padding: 15px;
+            border-bottom: 1px solid #eee;
+            cursor: pointer;
+            position: relative;
+        }
+
+        .complaint-item:hover {
+            background-color: #f9f9f9;
+        }
+
+        .complaint-item.active {
+            background-color: #f0f8ff;
+            border-left: 3px solid #3498db;
+        }
+
+        .complaint-item-title {
+            font-weight: 500;
+            margin-bottom: 5px;
+            font-size: 14px;
+            display: flex;
+            align-items: center;
+        }
+
+        .complaint-item-title .dot {
+            width: 8px;
+            height: 8px;
+            border-radius: 50%;
+            background-color: #3498db;
+            margin-right: 8px;
+        }
+
+        .complaint-item-time {
+            font-size: 12px;
+            color: #999;
+            margin-bottom: 5px;
+        }
+
+        .complaint-item-status {
+            font-size: 12px;
+            padding: 2px 6px;
+            border-radius: 10px;
+            display: inline-block;
+        }
+
+        .status-pending {
+            background-color: #fff8e6;
+            color: #ffb700;
+        }
+
+        .status-verifying {
+            background-color: #e6f7ff;
+            color: #3498db;
+        }
+
+        .status-completed {
+            background-color: #e6fff0;
+            color: #2ecc71;
+        }
+
+        .complaint-detail-header {
+            margin-bottom: 20px;
+            padding-bottom: 15px;
+            border-bottom: 1px solid #eee;
+        }
+
+        .complaint-detail-title {
+            font-size: 18px;
+            font-weight: 500;
+            margin-bottom: 10px;
+        }
+
+        .complaint-detail-info {
+            display: grid;
+            grid-template-columns: repeat(2, 1fr);
+            gap: 15px;
+            margin-bottom: 20px;
+        }
+
+        .info-item {
+            display: flex;
+            margin-bottom: 10px;
+        }
+
+        .info-label {
+            width: 100px;
+            color: #666;
+            font-size: 14px;
+        }
+
+        .info-value {
+            flex: 1;
+            font-size: 14px;
+        }
+
+        .complaint-content {
+            margin-bottom: 20px;
+        }
+
+        .content-label {
+            color: #666;
+            font-size: 14px;
+            margin-bottom: 10px;
+        }
+
+        .content-value {
+            padding: 15px;
+            background-color: #f9f9f9;
+            border-radius: 4px;
+            font-size: 14px;
+            line-height: 1.6;
+        }
+
+        .complaint-actions {
+            display: flex;
+            justify-content: center;
+            margin-top: 30px;
+        }
+
+        .action-btn {
+            padding: 10px 30px;
+            border-radius: 4px;
+            cursor: pointer;
+            font-size: 14px;
+            border: none;
+        }
+
+        .submit-btn {
+            background-color: #3498db;
+            color: white;
+        }
+
+        .submit-btn:hover {
+            background-color: #2980b9;
+        }
+
+        .radio-group {
+            display: flex;
+            align-items: center;
+            margin-bottom: 10px;
+        }
+
+        .radio-item {
+            display: flex;
+            align-items: center;
+            margin-right: 20px;
+            cursor: pointer;
+        }
+
+        .radio-item input[type="radio"] {
+            margin-right: 5px;
+        }
+
+        /* 图标字体 */
+        .icon {
+            font-family: "Material Icons";
+            font-weight: normal;
+            font-style: normal;
+            font-size: 24px;
+            display: inline-block;
+            line-height: 1;
+            text-transform: none;
+            letter-spacing: normal;
+            word-wrap: normal;
+            white-space: nowrap;
+            direction: ltr;
+            -webkit-font-smoothing: antialiased;
+            text-rendering: optimizeLegibility;
+            -moz-osx-font-smoothing: grayscale;
+            font-feature-settings: 'liga';
+        }
+    </style>
+    <link href="https://fonts.googleapis.com/icon?family=Material+Icons" rel="stylesheet">
+</head>
+<body>
+    <!-- 主侧边栏 (图标栏) -->
+    <div class="main-sidebar">
+        <div class="sidebar-logo">
+            <!-- 预留Logo位置 -->
+            <div src="image/logo.png" alt="Logo" class="sidebar-logo img"></div>
+        </div>
+        <a href="首页.html" class="sidebar-item">
+            <i class="icon">home</i>
+            <span>首页</span>
+        </a>
+        <a href="财务管理--收益分析.html" class="sidebar-item">
+            <i class="icon">description</i>
+            <span>财务</span>
+        </a>
+        <a href="用户管理--账号管理.html" class="sidebar-item">
+            <i class="icon">person</i>
+            <span>用户</span>
+        </a>
+        <a href="数据管理--影像管理.html" class="sidebar-item">
+            <i class="icon">data_usage</i>
+            <span>数据</span>
+        </a>
+        <a href="客服管理--咨询问答.html" class="sidebar-item active">
+            <i class="icon">chat</i>
+            <span>客服</span>
+        </a>
+    </div>
+
+    <!-- 次侧边栏 (功能栏) -->
+    <div class="sub-sidebar">
+        <div class="sub-sidebar-title">— 客服 —</div>
+        <a href="客服管理--咨询问答.html" class="sub-sidebar-item">
+            客服列表
+        </a>
+        <a href="客服管理--投诉处理.html" class="sub-sidebar-item active">
+            投诉处理
+        </a>
+    </div>
+
+    <!-- 主内容区域 -->
+    <div class="main-content">
+        <!-- 投诉处理标签页 -->
+        <div class="complaint-tabs">
+            <a href="客服管理--投诉处理.html" class="complaint-tab">待审批</a>
+            <a href="客服管理--投诉处理2.html" class="complaint-tab active">核实中</a>
+            <a href="客服管理--投诉处理3.html" class="complaint-tab">处理完毕</a>
+        </div>
+
+        <!-- 投诉处理容器 -->
+        <div class="complaint-container">
+            <!-- 投诉列表 -->
+            <div class="complaint-list">
+                <button class="add-complaint-btn">
+                    <i class="icon" style="font-size: 16px;">add</i>
+                    导出
+                </button>
+                
+                <div class="complaint-item active">
+                    <div class="complaint-item-title">
+                        <span class="dot"></span>
+                        一只小喵咪
+                    </div>
+                    <div class="complaint-item-time">2021-09-07 17:42:30</div>
+                    <div class="complaint-item-status status-verifying">处理中</div>
+                </div>
+                
+                <div class="complaint-item">
+                    <div class="complaint-item-title">
+                        <span class="dot"></span>
+                        两只小飞鸟
+                    </div>
+                    <div class="complaint-item-time">2021-09-07 12:42:30</div>
+                    <div class="complaint-item-status status-completed">结处理</div>
+                </div>
+            </div>
+
+            <!-- 投诉详情 -->
+            <div class="complaint-detail">
+                <div class="complaint-detail-header">
+                    <div class="complaint-detail-title">投诉详情</div>
+                </div>
+
+                <div class="complaint-detail-info">
+                    <div class="info-item">
+                        <div class="info-label">客户姓名：</div>
+                        <div class="info-value">一只小喵咪</div>
+                    </div>
+                    <div class="info-item">
+                        <div class="info-label">投诉类型：</div>
+                        <div class="info-value">服务态度差</div>
+                    </div>
+                    <div class="info-item">
+                        <div class="info-label">投诉原因：</div>
+                        <div class="info-value">客服响应慢/言语不当/推荐错误</div>
+                    </div>
+                    <div class="info-item">
+                        <div class="info-label">发布时间：</div>
+                        <div class="info-value">2021-09-07 15:30:33</div>
+                    </div>
+                    <div class="info-item">
+                        <div class="info-label">客户标签：</div>
+                        <div class="info-value">是</div>
+                    </div>
+                    <div class="info-item">
+                        <div class="info-label">处理人员：</div>
+                        <div class="info-value">客服A</div>
+                    </div>
+                </div>
+
+                <div class="complaint-content">
+                    <div class="content-label">处理情况：</div>
+                    <div class="content-value">
+                        初步处理措施：<br>
+                        对涉事客服(编XX)进行服务质量再培训，并开展当日检查。<br><br>
+                        后续处理：<br>
+                        已与客户沟通(电话平台已留言并已成功发起)，启动改进计划。<br><br>
+                        优化客服排队系统，承诺客服响应等待时间低于5分钟，对全场景化"百问百答"培训，禁止语言不当行为。
+                    </div>
+                </div>
+
+                <div class="radio-group">
+                    <label class="radio-item">
+                        <input type="radio" name="status" checked>
+                        <span>选择</span>
+                    </label>
+                </div>
+
+                <a href="客服管理--投诉处理3.html" class="complaint-actions">
+                    <button class="action-btn submit-btn">提交</button>
+                </a>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        // 获取DOM元素
+        const complaintTabs = document.querySelectorAll('.complaint-tab');
+        const complaintItems = document.querySelectorAll('.complaint-item');
+        const sidebarItems = document.querySelectorAll('.sidebar-item');
+        const subSidebarItems = document.querySelectorAll('.sub-sidebar-item');
+        const addComplaintBtn = document.querySelector('.add-complaint-btn');
+        const submitBtn = document.querySelector('.submit-btn');
+
+        // 投诉标签页切换
+        complaintTabs.forEach(tab => {
+            tab.addEventListener('click', function() {
+                // 移除所有标签的active类
+                complaintTabs.forEach(t => t.classList.remove('active'));
+                // 为当前点击标签添加active类
+                this.classList.add('active');
+                
+                // 预留标签切换逻辑
+                const tabName = this.textContent;
+                // 这里可以添加标签切换逻辑
+                // loadComplaints(tabName);
+            });
+        });
+
+        // 投诉项点击事件
+        complaintItems.forEach(item => {
+            item.addEventListener('click', function() {
+                // 移除所有项的active类
+                complaintItems.forEach(i => i.classList.remove('active'));
+                // 为当前点击项添加active类
+                this.classList.add('active');
+                
+                // 预留加载投诉详情的逻辑
+                const complaintTitle = this.querySelector('.complaint-item-title').textContent.trim();
+                // 这里可以添加加载投诉详情的逻辑
+                // loadComplaintDetail(complaintTitle);
+            });
+        });
+
+        // 侧边栏导航点击事件
+        sidebarItems.forEach(item => {
+            item.addEventListener('click', function() {
+                // 移除所有项的active类
+                sidebarItems.forEach(i => i.classList.remove('active'));
+                // 为当前点击项添加active类
+                this.classList.add('active');
+                
+                // 预留导航跳转逻辑
+                const itemName = this.querySelector('span').textContent;
+                // 这里可以添加导航跳转逻辑
+                // navigateTo(itemName);
+            });
+        });
+
+        // 次侧边栏导航点击事件
+        subSidebarItems.forEach(item => {
+            item.addEventListener('click', function() {
+                // 移除所有项的active类
+                subSidebarItems.forEach(i => i.classList.remove('active'));
+                // 为当前点击项添加active类
+                this.classList.add('active');
+                
+                // 预留导航跳转逻辑
+                const itemName = this.textContent.trim();
+                // 这里可以添加导航跳转逻辑
+                // navigateToSub(itemName);
+            });
+        });
+    </script>
+</body>
+</html>

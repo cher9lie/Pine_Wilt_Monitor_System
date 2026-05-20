@@ -1,0 +1,1135 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>影像数据管理系统</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+            font-family: "Microsoft YaHei", "PingFang SC", sans-serif;
+        }
+
+        body {
+            display: flex;
+            background-color: #f5f5f5;
+            color: #333;
+            min-height: 100vh;
+        }
+
+        /* 主侧边栏样式 (图标栏) */
+        .main-sidebar {
+            width: 60px;
+            background-color: #1e1e2f;
+            display: flex;
+            flex-direction: column;
+            color: #fff;
+            position: fixed;
+            height: 100vh;
+            z-index: 100;
+        }
+
+        .sidebar-logo {
+            padding: 15px 0;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            border-bottom: 1px solid rgba(255, 255, 255, 0.1);
+            position: relative; /* 确保 logo 可以使用 z-index */
+        }
+
+       .sidebar-logo img {
+            max-width: 30px;
+            max-height: 30px;
+            width: auto;
+            height: auto;
+            border-radius: 50%;
+            z-index: 101; /* 设置 z-index 使其处于顶层 */
+            position: relative; /* 确保 z-index 生效 */
+        }
+
+
+        .sidebar-item {
+            padding: 15px 0;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            cursor: pointer;
+            transition: background-color 0.3s;
+            position: relative;
+            color: #fff;
+            text-decoration: none;
+        }
+
+        .sidebar-item.active {
+            background-color: #3498db;
+        }
+
+        .sidebar-item:hover {
+            background-color: rgba(52, 152, 219, 0.7);
+            color: #fff;
+            text-decoration: none;
+        }
+
+        .sidebar-item i {
+            font-size: 20px;
+            margin-bottom: 5px;
+            color: #fff;
+            text-decoration: none;
+        }
+
+        .sidebar-item span {
+            font-size: 12px;
+            color: #fff;
+            text-decoration: none;
+        }
+        .sidebar-item a {
+        color: #fff; /* 添加这行代码，设置链接文字颜色为白色 */
+        text-decoration: none; /* 可以添加这行代码，去除链接的下划线 */
+        }
+        /* 次侧边栏样式 (功能栏) */
+        .sub-sidebar {
+            width: 120px;
+            background-color: #27293d;
+            color: #fff;
+            position: fixed;
+            left: 60px;
+            height: 100vh;
+            z-index: 99;
+            padding-top: 15px;
+        }
+
+        .sub-sidebar-title {
+            padding: 10px 15px;
+            font-size: 14px;
+            font-weight: 500;
+            border-bottom: 1px solid rgba(255, 255, 255, 0.1);
+            margin-bottom: 10px;
+            text-align: center;
+        }
+
+        .sub-sidebar-item {
+            padding: 12px 15px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            cursor: pointer;
+            transition: background-color 0.3s;
+            font-size: 14px;
+            color: #fff;
+            text-decoration: none;
+        }
+
+        .sub-sidebar-item.active {
+            background-color: rgba(52, 152, 219, 0.3);
+        }
+
+        .sub-sidebar-item:hover {
+            background-color: rgba(52, 152, 219, 0.2);
+        }
+
+        /* 主内容区域 */
+        .main-content {
+            flex: 1;
+            margin-left: 180px; /* 60px + 120px */
+            display: flex;
+            flex-direction: column;
+            min-height: 100vh;
+        }
+
+        /* 顶部导航栏 */
+        .top-nav {
+            background-color: #fff;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            padding: 0 20px;
+            height: 50px;
+            box-shadow: 0 1px 3px rgba(0, 0, 0, 0.1);
+            position: sticky;
+            top: 0;
+            z-index: 10;
+        }
+
+        .nav-tabs {
+            display: flex;
+            height: 100%;
+        }
+
+        .nav-tab {
+            padding: 0 15px;
+            display: flex;
+            align-items: center;
+            height: 100%;
+            cursor: pointer;
+            position: relative;
+            color: #666;
+        }
+
+        .nav-tab.active {
+            color: #3498db;
+            font-weight: 500;
+            border-bottom: 2px solid #3498db;
+        }
+
+        .nav-tab .close-icon {
+            margin-left: 5px;
+            font-size: 16px;
+        }
+
+        .nav-actions {
+            display: flex;
+            align-items: center;
+        }
+
+        .nav-action {
+            margin-left: 15px;
+            cursor: pointer;
+            position: relative;
+        }
+
+        .notification-badge {
+            position: absolute;
+            top: -5px;
+            right: -5px;
+            background-color: #e74c3c;
+            color: white;
+            border-radius: 50%;
+            width: 16px;
+            height: 16px;
+            font-size: 10px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+        }
+
+        .user-dropdown {
+            display: flex;
+            align-items: center;
+            cursor: pointer;
+            margin-left: 20px;
+        }
+
+        .user-dropdown i {
+            margin-left: 5px;
+            font-size: 12px;
+        }
+
+        /* 搜索区域 */
+        .search-section {
+            padding: 15px;
+            display: flex;
+            align-items: center;
+        }
+
+        .search-input {
+            padding: 8px 12px;
+            border: 1px solid #ddd;
+            border-radius: 4px;
+            width: 300px;
+            margin-right: 10px;
+        }
+
+        .search-btn {
+            background-color: #3498db;
+            color: white;
+            border: none;
+            border-radius: 4px;
+            padding: 8px 15px;
+            cursor: pointer;
+            display: flex;
+            align-items: center;
+        }
+
+        .search-btn:hover {
+            background-color: #2980b9;
+        }
+
+        .search-btn i {
+            margin-right: 5px;
+        }
+
+        .reset-btn {
+            background-color: transparent;
+            color: #666;
+            border: 1px solid #ddd;
+            border-radius: 4px;
+            padding: 8px 15px;
+            cursor: pointer;
+            margin-left: 10px;
+        }
+
+        /* 操作按钮区域 */
+        .action-bar {
+            padding: 0 15px 15px;
+        }
+
+        .add-btn {
+            background-color: #fff;
+            color: #3498db;
+            border: 1px solid #3498db;
+            border-radius: 4px;
+            padding: 8px 20px;
+            cursor: pointer;
+            display: flex;
+            align-items: center;
+            width: fit-content;
+        }
+
+        .add-btn:hover {
+            background-color: #f5f9ff;
+        }
+
+        .add-btn i {
+            margin-right: 5px;
+        }
+
+        /* 表格区域 */
+        .table-container {
+            margin: 0 15px 15px;
+            background-color: #fff;
+            border-radius: 4px;
+            box-shadow: 0 1px 3px rgba(0, 0, 0, 0.1);
+            overflow: auto;
+        }
+
+        .data-table {
+            width: 100%;
+            border-collapse: collapse;
+        }
+
+        .data-table th {
+            background-color: #f9f9f9;
+            padding: 12px 15px;
+            text-align: left;
+            font-weight: 500;
+            color: #666;
+            border-bottom: 1px solid #eee;
+        }
+
+        .data-table td {
+            padding: 12px 15px;
+            border-bottom: 1px solid #eee;
+        }
+
+        .data-table tr:hover {
+            background-color: #f5f5f5;
+        }
+
+        /* 操作按钮 */
+        .operation-btns {
+            display: flex;
+        }
+
+        .operation-btn {
+            padding: 5px 10px;
+            border-radius: 4px;
+            cursor: pointer;
+            margin-right: 10px;
+            font-size: 12px;
+        }
+
+        .operation-edit {
+            color: #3498db;
+        }
+
+        .operation-delete {
+            color: #e74c3c;
+        }
+
+        .operation-config {
+            color: #2ecc71;
+        }
+
+        /* 分页 */
+        .pagination {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            padding: 15px;
+            border-top: 1px solid #eee;
+        }
+
+        .page-info {
+            display: flex;
+            align-items: center;
+            color: #666;
+        }
+
+        .page-size {
+            margin: 0 10px;
+        }
+
+        .page-size-select {
+            padding: 5px;
+            border: 1px solid #ddd;
+            border-radius: 4px;
+            margin-left: 5px;
+        }
+
+        .page-numbers {
+            display: flex;
+            align-items: center;
+        }
+
+        .page-nav {
+            width: 30px;
+            height: 30px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            margin: 0 5px;
+            border-radius: 4px;
+            cursor: pointer;
+            color: #666;
+        }
+
+        .page-nav.disabled {
+            color: #ccc;
+            cursor: not-allowed;
+        }
+
+        .page-number {
+            width: 30px;
+            height: 30px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            margin: 0 5px;
+            border-radius: 4px;
+            cursor: pointer;
+        }
+
+        .page-number.active {
+            background-color: #3498db;
+            color: white;
+        }
+
+        .page-ellipsis {
+            margin: 0 5px;
+        }
+
+        .page-jump {
+            display: flex;
+            align-items: center;
+            margin-left: 15px;
+        }
+
+        .page-jump-input {
+            width: 40px;
+            padding: 5px;
+            text-align: center;
+            border: 1px solid #ddd;
+            border-radius: 4px;
+            margin: 0 5px;
+        }
+
+        .page-jump-btn {
+            padding: 5px 10px;
+            border: 1px solid #ddd;
+            border-radius: 4px;
+            cursor: pointer;
+            background-color: #f9f9f9;
+        }
+
+        /* 用户下拉菜单 */
+        .dropdown-menu {
+            position: absolute;
+            top: 50px;
+            right: 10px;
+            background-color: white;
+            border-radius: 4px;
+            box-shadow: 0 2px 10px rgba(0, 0, 0, 0.1);
+            width: 120px;
+            display: none;
+            z-index: 100;
+        }
+
+        .dropdown-menu.show {
+            display: block;
+        }
+
+        .dropdown-item {
+            padding: 10px 15px;
+            cursor: pointer;
+            display: flex;
+            align-items: center;
+        }
+
+        .dropdown-item:hover {
+            background-color: #f5f5f5;
+        }
+
+        .dropdown-item i {
+            margin-right: 10px;
+            font-size: 14px;
+        }
+
+        /* 图标字体 */
+        .icon {
+            font-family: "Material Icons";
+            font-weight: normal;
+            font-style: normal;
+            font-size: 24px;
+            display: inline-block;
+            line-height: 1;
+            text-transform: none;
+            letter-spacing: normal;
+            word-wrap: normal;
+            white-space: nowrap;
+            direction: ltr;
+            -webkit-font-smoothing: antialiased;
+            text-rendering: optimizeLegibility;
+            -moz-osx-font-smoothing: grayscale;
+            font-feature-settings: 'liga';
+        }
+
+        /* 模态框 */
+        .modal {
+            display: none;
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background-color: rgba(0, 0, 0, 0.5);
+            z-index: 1000;
+            justify-content: center;
+            align-items: center;
+        }
+
+        .modal.show {
+            display: flex;
+        }
+
+        .modal-content {
+            background-color: white;
+            border-radius: 4px;
+            width: 500px;
+            box-shadow: 0 5px 15px rgba(0, 0, 0, 0.3);
+        }
+
+        .modal-header {
+            padding: 15px 20px;
+            border-bottom: 1px solid #eee;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+
+        .modal-title {
+            font-size: 18px;
+            font-weight: 500;
+        }
+
+        .modal-close {
+            cursor: pointer;
+            font-size: 20px;
+        }
+
+        .modal-body {
+            padding: 20px;
+        }
+
+        .form-group {
+            margin-bottom: 15px;
+        }
+
+        .form-label {
+            display: block;
+            margin-bottom: 5px;
+            font-weight: 500;
+        }
+
+        .form-input {
+            width: 100%;
+            padding: 8px 12px;
+            border: 1px solid #ddd;
+            border-radius: 4px;
+        }
+
+        .form-select {
+            width: 100%;
+            padding: 8px 12px;
+            border: 1px solid #ddd;
+            border-radius: 4px;
+        }
+
+        .form-textarea {
+            width: 100%;
+            padding: 8px 12px;
+            border: 1px solid #ddd;
+            border-radius: 4px;
+            resize: vertical;
+            min-height: 100px;
+        }
+
+        .modal-footer {
+            padding: 15px 20px;
+            border-top: 1px solid #eee;
+            display: flex;
+            justify-content: flex-end;
+        }
+
+        .modal-btn {
+            padding: 8px 15px;
+            border-radius: 4px;
+            cursor: pointer;
+            margin-left: 10px;
+        }
+
+        .cancel-btn {
+            background-color: #f5f5f5;
+            border: 1px solid #ddd;
+            color: #666;
+        }
+
+        .confirm-btn {
+            background-color: #3498db;
+            border: none;
+            color: white;
+        }
+    </style>
+    <link href="https://fonts.googleapis.com/icon?family=Material+Icons" rel="stylesheet">
+</head>
+<body>
+    <!-- 主侧边栏 (图标栏) -->
+    <div class="main-sidebar">
+        <div class="sidebar-logo">
+            <!-- 预留Logo位置 -->
+            <div src="image/logo.png" alt="Logo" class="sidebar-logo img"></div>
+        </div>
+        <a href="首页.html" class="sidebar-item">
+            <i class="icon">home</i>
+            <span>首页</span>
+        </a>
+        <a href="财务管理--收益分析.html" class="sidebar-item">
+            <i class="icon">description</i>
+            <span>财务</span>
+        </a>
+        <a href="用户管理--账号管理.html" class="sidebar-item">
+            <i class="icon">person</i>
+            <span>用户</span>
+        </a>
+        <a href="数据管理--影像管理.html" class="sidebar-item active">
+            <i class="icon">data_usage</i>
+            <span>数据</span>
+        </a>
+        <a href="客服管理--咨询问答.html" class="sidebar-item">
+            <i class="icon">chat</i>
+            <span>客服</span>
+        </a>
+    </div>
+
+    <!-- 次侧边栏 (功能栏) -->
+    <div class="sub-sidebar">
+        <div class="sub-sidebar-title">— 数据 —</div>
+        <a href="数据管理--影像管理.html" class="sub-sidebar-item active">
+            影像数据
+        </a>
+        <a href="数据管理--新闻管理.html" class="sub-sidebar-item">
+            新闻数据
+        </a>
+        <a href="数据管理--算法管理.html" class="sub-sidebar-item">
+            算法数据
+        </a>
+        <a href="数据管理--地面管理.html" class="sub-sidebar-item">
+            地面数据
+        </a>
+    </div>
+
+    <!-- 主内容区域 -->
+    <div class="main-content">
+        <!-- 顶部导航栏 -->
+        <div class="top-nav">
+            <div class="nav-tabs">
+                <div class="nav-tab">
+                    <i class="icon" style="font-size: 18px;">view_list</i>
+                    目录
+                </div>
+                <div class="nav-tab active">
+                    <i class="icon" style="font-size: 18px;">photo_library</i>
+                    影像
+                </div>
+                <div class="nav-tab">
+                    <i class="icon" style="font-size: 18px;">close</i>
+                </div>
+            </div>
+            <div class="nav-actions">
+                <div class="nav-action">
+                    <i class="icon">apps</i>
+                </div>
+                <div class="nav-action">
+                    <i class="icon">notifications</i>
+                    <div class="notification-badge">1</div>
+                </div>
+                <div class="user-dropdown" id="userDropdown">
+                    <span>管理员</span>
+                    <i class="icon">arrow_drop_down</i>
+                </div>
+                <div class="dropdown-menu" id="dropdownMenu">
+                    <div class="dropdown-item">
+                        <i class="icon" style="font-size: 18px;">person</i>
+                        个人中心
+                    </div>
+                    <div class="dropdown-item">
+                        <i class="icon" style="font-size: 18px;">exit_to_app</i>
+                        退出登录
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- 搜索区域 -->
+        <div class="search-section">
+            <input type="text" class="search-input" placeholder="请输入">
+            <button class="search-btn">
+                <i class="icon" style="font-size: 18px;">search</i>
+                搜索
+            </button>
+            <button class="reset-btn">重置</button>
+        </div>
+
+        <!-- 操作按钮区域 -->
+        <div class="action-bar">
+            <button class="add-btn" id="addDataBtn">
+                <i class="icon" style="font-size: 18px;">add</i>
+                新增
+            </button>
+        </div>
+
+        <!-- 表格区域 -->
+        <div class="table-container">
+            <table class="data-table">
+                <thead>
+                    <tr>
+                        <th>影像数据编号</th>
+                        <th>地区</th>
+                        <th>影像类型</th>
+                        <th>更新日期</th>
+                        <th>备注</th>
+                        <th>操作</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    <tr>
+                        <td>00001</td>
+                        <td>四川省</td>
+                        <td>遥感影像</td>
+                        <td>2024/02/01</td>
+                        <td>监测数据已存储</td>
+                        <td>
+                            <div class="operation-btns">
+                                <div class="operation-btn operation-edit">修改</div>
+                                <div class="operation-btn operation-delete">删除</div>
+                                <div class="operation-btn operation-config">配置</div>
+                            </div>
+                        </td>
+                    </tr>
+                    <tr>
+                        <td>00002</td>
+                        <td>贵州省</td>
+                        <td>遥感影像</td>
+                        <td>2024/03/05</td>
+                        <td>附件</td>
+                        <td>
+                            <div class="operation-btns">
+                                <div class="operation-btn operation-edit">修改</div>
+                                <div class="operation-btn operation-delete">删除</div>
+                                <div class="operation-btn operation-config">配置</div>
+                            </div>
+                        </td>
+                    </tr>
+                    <tr>
+                        <td>00003</td>
+                        <td>云南省</td>
+                        <td>遥感影像</td>
+                        <td>2024/07/08</td>
+                        <td>和图像相似度高</td>
+                        <td>
+                            <div class="operation-btns">
+                                <div class="operation-btn operation-edit">修改</div>
+                                <div class="operation-btn operation-delete">删除</div>
+                                <div class="operation-btn operation-config">配置</div>
+                            </div>
+                        </td>
+                    </tr>
+                    <tr>
+                        <td>00004</td>
+                        <td>达州市</td>
+                        <td>地物结果</td>
+                        <td>2023/03/09</td>
+                        <td>2023年3月结合二次收获</td>
+                        <td>
+                            <div class="operation-btns">
+                                <div class="operation-btn operation-edit">修改</div>
+                                <div class="operation-btn operation-delete">删除</div>
+                                <div class="operation-btn operation-config">配置</div>
+                            </div>
+                        </td>
+                    </tr>
+                    <tr>
+                        <td>00005</td>
+                        <td>清远区</td>
+                        <td>地物结果</td>
+                        <td>2023/01/03</td>
+                        <td>2023年第一季</td>
+                        <td>
+                            <div class="operation-btns">
+                                <div class="operation-btn operation-edit">修改</div>
+                                <div class="operation-btn operation-delete">删除</div>
+                                <div class="operation-btn operation-config">配置</div>
+                            </div>
+                        </td>
+                    </tr>
+                    <tr>
+                        <td>00005</td>
+                        <td>清远区</td>
+                        <td>地物结果</td>
+                        <td>2023/01/03</td>
+                        <td>2023年第一季</td>
+                        <td>
+                            <div class="operation-btns">
+                                <div class="operation-btn operation-edit">修改</div>
+                                <div class="operation-btn operation-delete">删除</div>
+                                <div class="operation-btn operation-config">配置</div>
+                            </div>
+                        </td>
+                    </tr>
+                    <tr>
+                        <td>00003</td>
+                        <td>云南省</td>
+                        <td>遥感影像</td>
+                        <td>2024/07/08</td>
+                        <td>和图像相似度高</td>
+                        <td>
+                            <div class="operation-btns">
+                                <div class="operation-btn operation-edit">修改</div>
+                                <div class="operation-btn operation-delete">删除</div>
+                                <div class="operation-btn operation-config">配置</div>
+                            </div>
+                        </td>
+                    </tr>
+                </tbody>
+            </table>
+            <div class="pagination">
+                <div class="page-info">
+                    共 <span>1000</span> 条
+                    <div class="page-size">
+                        <select class="page-size-select">
+                            <option>10条/页</option>
+                            <option>20条/页</option>
+                            <option>50条/页</option>
+                            <option>100条/页</option>
+                        </select>
+                    </div>
+                </div>
+                <div class="page-numbers">
+                    <div class="page-nav">
+                        <i class="icon" style="font-size: 18px;">chevron_left</i>
+                    </div>
+                    <div class="page-number active">1</div>
+                    <div class="page-number">2</div>
+                    <div class="page-number">3</div>
+                    <div class="page-number">4</div>
+                    <div class="page-number">5</div>
+                    <div class="page-number">6</div>
+                    <div class="page-ellipsis">...</div>
+                    <div class="page-number">100</div>
+                    <div class="page-nav">
+                        <i class="icon" style="font-size: 18px;">chevron_right</i>
+                    </div>
+                    <div class="page-jump">
+                        前往 <input type="text" class="page-jump-input" value="1"> 页
+                        <button class="page-jump-btn">确定</button>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- 新增/编辑影像数据模态框 -->
+    <div class="modal" id="dataModal">
+        <div class="modal-content">
+            <div class="modal-header">
+                <div class="modal-title">新增影像数据</div>
+                <div class="modal-close" id="closeModal">&times;</div>
+            </div>
+            <div class="modal-body">
+                <div class="form-group">
+                    <label class="form-label">影像数据编号</label>
+                    <input type="text" class="form-input" id="dataId" placeholder="请输入影像数据编号">
+                </div>
+                <div class="form-group">
+                    <label class="form-label">地区</label>
+                    <select class="form-select" id="dataRegion">
+                        <option value="">请选择地区</option>
+                        <option value="四川省">四川省</option>
+                        <option value="贵州省">贵州省</option>
+                        <option value="云南省">云南省</option>
+                        <option value="达州市">达州市</option>
+                        <option value="清远区">清远区</option>
+                    </select>
+                </div>
+                <div class="form-group">
+                    <label class="form-label">影像类型</label>
+                    <select class="form-select" id="dataType">
+                        <option value="">请选择影像类型</option>
+                        <option value="遥感影像">遥感影像</option>
+                        <option value="地物结果">地物结果</option>
+                    </select>
+                </div>
+                <div class="form-group">
+                    <label class="form-label">更新日期</label>
+                    <input type="date" class="form-input" id="dataDate">
+                </div>
+                <div class="form-group">
+                    <label class="form-label">备注</label>
+                    <textarea class="form-textarea" id="dataRemark" placeholder="请输入备注信息"></textarea>
+                </div>
+                <div class="form-group">
+                    <label class="form-label">上传影像</label>
+                    <input type="file" id="dataImage" accept="image/*">
+                </div>
+            </div>
+            <div class="modal-footer">
+                <button class="modal-btn cancel-btn" id="cancelModal">取消</button>
+                <button class="modal-btn confirm-btn" id="saveData">保存</button>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        // 用户下拉菜单
+        const userDropdown = document.getElementById('userDropdown');
+        const dropdownMenu = document.getElementById('dropdownMenu');
+
+        userDropdown.addEventListener('click', function() {
+            dropdownMenu.classList.toggle('show');
+        });
+
+        // 点击其他地方关闭下拉菜单
+        document.addEventListener('click', function(event) {
+            if (!userDropdown.contains(event.target) && !dropdownMenu.contains(event.target)) {
+                dropdownMenu.classList.remove('show');
+            }
+        });
+
+        // 模态框操作
+        const dataModal = document.getElementById('dataModal');
+        const addDataBtn = document.getElementById('addDataBtn');
+        const closeModal = document.getElementById('closeModal');
+        const cancelModal = document.getElementById('cancelModal');
+        const saveData = document.getElementById('saveData');
+
+        // 打开新增影像数据模态框
+        addDataBtn.addEventListener('click', function() {
+            // 重置表单
+            document.getElementById('dataId').value = '';
+            document.getElementById('dataRegion').value = '';
+            document.getElementById('dataType').value = '';
+            document.getElementById('dataDate').value = '';
+            document.getElementById('dataRemark').value = '';
+            document.getElementById('dataImage').value = '';
+            
+            // 修改标题为新增影像数据
+            document.querySelector('.modal-title').textContent = '新增影像数据';
+            
+            // 显示模态框
+            dataModal.classList.add('show');
+        });
+
+        // 关闭模态框
+        function closeDataModal() {
+            dataModal.classList.remove('show');
+        }
+
+        closeModal.addEventListener('click', closeDataModal);
+        cancelModal.addEventListener('click', closeDataModal);
+
+        // 保存影像数据
+        saveData.addEventListener('click', function() {
+            const dataId = document.getElementById('dataId').value;
+            const dataRegion = document.getElementById('dataRegion').value;
+            const dataType = document.getElementById('dataType').value;
+            const dataDate = document.getElementById('dataDate').value;
+            const dataRemark = document.getElementById('dataRemark').value;
+            
+            // 表单验证
+            if (!dataId || !dataRegion || !dataType || !dataDate) {
+                alert('请填写完整信息');
+                return;
+            }
+            
+            // 这里预留保存影像数据的逻辑
+            alert('保存影像数据: ' + dataId);
+            
+            // 关闭模态框
+            closeDataModal();
+        });
+
+        // 编辑影像数据
+        const editBtns = document.querySelectorAll('.operation-edit');
+        editBtns.forEach(btn => {
+            btn.addEventListener('click', function(e) {
+                e.stopPropagation();
+                const row = this.closest('tr');
+                const dataId = row.cells[0].textContent;
+                const dataRegion = row.cells[1].textContent;
+                const dataType = row.cells[2].textContent;
+                const dataDate = row.cells[3].textContent;
+                const dataRemark = row.cells[4].textContent;
+                
+                // 填充表单
+                document.getElementById('dataId').value = dataId;
+                document.getElementById('dataRegion').value = dataRegion;
+                document.getElementById('dataType').value = dataType;
+                document.getElementById('dataDate').value = formatDateForInput(dataDate);
+                document.getElementById('dataRemark').value = dataRemark;
+                
+                // 修改标题为编辑影像数据
+                document.querySelector('.modal-title').textContent = '编辑影像数据';
+                
+                // 显示模态框
+                dataModal.classList.add('show');
+            });
+        });
+
+        // 格式化日期为input日期格式 (YYYY-MM-DD)
+        function formatDateForInput(dateStr) {
+            const parts = dateStr.split('/');
+            if (parts.length === 3) {
+                return `${parts[0]}-${parts[1].padStart(2, '0')}-${parts[2].padStart(2, '0')}`;
+            }
+            return '';
+        }
+
+        // 删除影像数据
+        const deleteBtns = document.querySelectorAll('.operation-delete');
+        deleteBtns.forEach(btn => {
+            btn.addEventListener('click', function(e) {
+                e.stopPropagation();
+                const row = this.closest('tr');
+                const dataId = row.cells[0].textContent;
+                
+                // 这里预留删除影像数据的逻辑
+                if (confirm(`确定要删除影像数据 ${dataId} 吗？`)) {
+                    // 执行删除操作
+                    alert(`删除影像数据: ${dataId}`);
+                }
+            });
+        });
+
+        // 配置影像数据
+        const configBtns = document.querySelectorAll('.operation-config');
+        configBtns.forEach(btn => {
+            btn.addEventListener('click', function(e) {
+                e.stopPropagation();
+                const row = this.closest('tr');
+                const dataId = row.cells[0].textContent;
+                
+                // 这里预留配置影像数据的逻辑
+                alert(`配置影像数据: ${dataId}`);
+            });
+        });
+
+        // 分页功能
+        const pageNumbers = document.querySelectorAll('.page-number');
+        pageNumbers.forEach(page => {
+            page.addEventListener('click', function() {
+                pageNumbers.forEach(p => p.classList.remove('active'));
+                this.classList.add('active');
+                // 这里预留页面跳转逻辑
+                // loadPage(this.textContent);
+            });
+        });
+
+        // 页码跳转
+        const pageJumpBtn = document.querySelector('.page-jump-btn');
+        pageJumpBtn.addEventListener('click', function() {
+            const pageNum = parseInt(document.querySelector('.page-jump-input').value);
+            if (pageNum > 0 && pageNum <= 100) {
+                // 这里预留页面跳转逻辑
+                // loadPage(pageNum);
+                alert('跳转到第 ' + pageNum + ' 页');
+            } else {
+                alert('请输入有效的页码（1-100）');
+            }
+        });
+
+        // 搜索按钮点击事件
+        const searchBtn = document.querySelector('.search-btn');
+        searchBtn.addEventListener('click', function() {
+            // 这里预留搜索功能逻辑
+            const keyword = document.querySelector('.search-input').value;
+            alert('搜索关键词: ' + (keyword || '全部'));
+        });
+
+        // 重置按钮点击事件
+        const resetBtn = document.querySelector('.reset-btn');
+        resetBtn.addEventListener('click', function() {
+            // 重置搜索条件
+            document.querySelector('.search-input').value = '';
+        });
+
+        // 主侧边栏导航点击事件
+        const sidebarItems = document.querySelectorAll('.main-sidebar .sidebar-item');
+        sidebarItems.forEach(item => {
+            item.addEventListener('click', function() {
+                sidebarItems.forEach(i => i.classList.remove('active'));
+                this.classList.add('active');
+                // 这里预留导航跳转逻辑
+                const itemName = this.querySelector('span').textContent;
+                alert('只有' + itemName+'用户有访问权限');
+            });
+        });
+
+        // 次侧边栏导航点击事件
+        const subSidebarItems = document.querySelectorAll('.sub-sidebar-item');
+        subSidebarItems.forEach(item => {
+            item.addEventListener('click', function() {
+                subSidebarItems.forEach(i => i.classList.remove('active'));
+                this.classList.add('active');
+                // 这里预留导航跳转逻辑
+                const itemText = this.textContent.trim();
+                alert('导航到子菜单: ' + itemText);
+            });
+        });
+
+        // 顶部导航标签点击事件
+        const navTabs = document.querySelectorAll('.nav-tab');
+        navTabs.forEach(tab => {
+            tab.addEventListener('click', function() {
+                // 关闭标签逻辑
+                if (this.querySelector('.icon') && this.querySelector('.icon').textContent === 'close') {
+                    // 这里预留关闭标签逻辑
+                    alert('关闭标签');
+                    return;
+                }
+                
+                navTabs.forEach(t => t.classList.remove('active'));
+                this.classList.add('active');
+                // 这里预留标签切换逻辑
+                const tabName = this.textContent.trim();
+                if (tabName) {
+                    alert('切换到标签: ' + tabName);
+                }
+            });
+        });
+
+        // 下拉菜单项点击事件
+        const dropdownItems = document.querySelectorAll('.dropdown-item');
+        dropdownItems.forEach(item => {
+            item.addEventListener('click', function() {
+                const itemText = this.textContent.trim();
+                // 这里预留下拉菜单项点击逻辑
+                alert('点击: ' + itemText);
+                dropdownMenu.classList.remove('show');
+            });
+        });
+    </script>
+</body>
+</html>

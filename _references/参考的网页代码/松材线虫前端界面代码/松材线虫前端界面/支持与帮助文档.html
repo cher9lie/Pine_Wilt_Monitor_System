@@ -1,0 +1,539 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>清远市松材线虫病灾害监测预警系统</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+            font-family: "Microsoft YaHei", sans-serif;
+        }
+        
+        body {
+            overflow: hidden;
+            background-color: #e6f2ff;
+        }
+        
+        .header {
+            background-color: #0a6aa1;
+            color: white;
+            height: 70px;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            padding: 0 20px;
+            background-image: linear-gradient(to right, #0a6aa1, #0a6aa1 70%, #0a6aa1), 
+                              url('data:image/svg+xml;utf8,<svg xmlns="http://www.w3.org/2000/svg" width="100%" height="100%"><path d="M0,10 Q50,20 100,10 T200,10" stroke="%23ffffff20" fill="none" stroke-width="2"/><path d="M0,30 Q50,40 100,30 T200,30" stroke="%23ffffff20" fill="none" stroke-width="2"/></svg>');
+            background-size: cover;
+            position: relative;
+        }
+        
+        .header h1 {
+            font-size: 24px;
+            font-weight: bold;
+        }
+        
+        .user-info {
+            display: flex;
+            align-items: center;
+            gap: 10px;
+        }
+        
+        .user-info img {
+            width: 40px;
+            height: 40px;
+            border-radius: 50%;
+            background-color: #fff;
+        }
+        
+        .help-link {
+            margin-right: 20px;
+            color: #ccc;
+            text-decoration: none;
+        }
+        
+        .breadcrumb {
+            padding: 10px 20px;
+            font-size: 14px;
+            color: #666;
+            background-color: #f0f0f0;
+            border-bottom: 1px solid #ddd;
+        }
+        
+        .main-container {
+            display: flex;
+            height: calc(100vh - 70px - 40px); /* 减去header和breadcrumb的高度 */
+        }
+        
+        .sidebar {
+            width: 240px;
+            background-color: #f0f8ff;
+            border-right: 1px solid #d0e4f7;
+            overflow-y: auto;
+        }
+        
+        .sidebar-section {
+            margin-bottom: 10px;
+        }
+        
+        .sidebar-title {
+            background-color: #a7d1f5;
+            color: #333;
+            padding: 10px 15px;
+            font-weight: bold;
+            border-radius: 4px;
+            margin: 10px;
+        }
+        
+        .sidebar-item {
+            padding: 10px 15px 10px 35px;
+            color: #333;
+            cursor: pointer;
+            position: relative;
+            font-size: 14px;
+            margin: 5px 10px;
+            border-radius: 4px;
+        }
+        
+        .sidebar-item:hover {
+            background-color: #e0f0ff;
+        }
+        
+        .sidebar-item.active {
+            background-color: #d0e8ff;
+            font-weight: bold;
+        }
+        
+        .sidebar-item i {
+            position: absolute;
+            left: 10px;
+            top: 50%;
+            transform: translateY(-50%);
+            color: #0a6aa1;
+        }
+        
+        .sidebar-dropdown {
+            padding: 10px 15px;
+            color: #333;
+            cursor: pointer;
+            position: relative;
+            font-size: 14px;
+            margin: 5px 10px;
+            border-radius: 4px;
+            background-color: #d0e8ff;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+        
+        .sidebar-dropdown:after {
+            content: "▼";
+            font-size: 10px;
+            color: #666;
+        }
+        
+        .main-content {
+            flex: 1;
+            padding: 20px;
+            overflow-y: auto;
+        }
+        
+        .search-bar {
+            display: flex;
+            justify-content: flex-end;
+            margin-bottom: 20px;
+        }
+        
+        .search-input {
+            width: 300px;
+            padding: 8px 15px;
+            border: 1px solid #ccc;
+            border-radius: 20px;
+            font-size: 14px;
+            outline: none;
+        }
+        
+        .search-btn {
+            width: 40px;
+            height: 36px;
+            background-color: #f5f5f5;
+            border: 1px solid #ccc;
+            border-left: none;
+            border-radius: 0 20px 20px 0;
+            cursor: pointer;
+            margin-left: -40px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+        }
+        
+        .search-btn:hover {
+            background-color: #e0e0e0;
+        }
+        
+        .content-title {
+            font-size: 24px;
+            font-weight: bold;
+            margin-bottom: 20px;
+            color: #333;
+        }
+        
+        .content-section {
+            margin-bottom: 30px;
+            width: 1000px;
+        }
+        
+        .section-title {
+            font-size: 18px;
+            font-weight: bold;
+            margin-bottom: 15px;
+            color: #333;
+            padding-bottom: 5px;
+            border-bottom: 1px solid #ddd;
+        }
+        
+        .section-content {
+            line-height: 1.6;
+            color: #333;
+            margin-bottom: 20px;
+        }
+        
+        .section-image {
+            float: right;
+            width: 300px;
+            margin: 0 0 20px 20px;
+            border-radius: 4px;
+            box-shadow: 0 2px 10px rgba(0, 0, 0, 0.1);
+            position:absolute;
+            top: 410px;
+            right: 500px;
+        }
+        
+        .bullet-list {
+            margin-left: 20px;
+            margin-bottom: 20px;
+        }
+        
+        .bullet-list li {
+            margin-bottom: 10px;
+        }
+        
+        .formula {
+            margin: 20px 0;
+            padding: 15px;
+            background-color: #f9f9f9;
+            border-left: 4px solid #0a6aa1;
+            font-family: "Consolas", monospace;
+        }
+        
+        .parameter-explanation {
+            margin: 20px 0;
+            padding: 15px;
+            background-color: #f5f5f5;
+            border-radius: 4px;
+        }
+        
+        .parameter-item {
+            margin-bottom: 10px;
+        }
+        
+        .toc {
+            position: fixed;
+            right: 20px;
+            top: 180px;
+            width: 200px;
+            background-color: white;
+            border: 1px solid #ddd;
+            border-radius: 4px;
+            padding: 15px;
+            box-shadow: 0 2px 10px rgba(0, 0, 0, 0.1);
+        }
+        
+        .toc-title {
+            font-weight: bold;
+            margin-bottom: 10px;
+            padding-bottom: 5px;
+            border-bottom: 1px solid #eee;
+            display: flex;
+            align-items: center;
+        }
+        
+        .toc-title i {
+            margin-right: 5px;
+        }
+        
+        .toc-item {
+            padding: 5px 0;
+            font-size: 14px;
+            color: #666;
+            cursor: pointer;
+        }
+        
+        .toc-item:hover {
+            color: #0a6aa1;
+        }
+        
+        .toc-item.active {
+            color: #0a6aa1;
+            font-weight: bold;
+        }
+        
+        .contact-info {
+            display: flex;
+            align-items: center;
+            margin-bottom: 10px;
+            color: #666;
+            font-size: 14px;
+        }
+        
+        .contact-info i {
+            margin-right: 10px;
+            color: #0a6aa1;
+        }
+        
+        .contact-button {
+            display: flex;
+            align-items: center;
+            background-color: #f5f5f5;
+            border: 1px solid #ddd;
+            border-radius: 4px;
+            padding: 8px 15px;
+            color: #333;
+            font-size: 14px;
+            cursor: pointer;
+            margin-bottom: 10px;
+        }
+        
+        .contact-button:hover {
+            background-color: #e0e0e0;
+        }
+        
+        .contact-button i {
+            margin-right: 10px;
+            color: #0a6aa1;
+        }
+    </style>
+</head>
+<body>
+    <div class="header">
+        <h1>清远市松材线虫病灾害监测预警系统</h1>
+        <div class="user-info">
+            <a href="#" class="help-link" onclick="window.location.href='大模型咨询.html'">? 退出支持与帮助文档</a>
+            <img src="data:image/svg+xml;utf8,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><circle cx='50' cy='50' r='40' fill='%23ddd'/><circle cx='50' cy='40' r='15' fill='%23aaa'/><path d='M25,85 Q50,65 75,85' fill='%23aaa'/></svg>" alt="用户头像">
+            <span>用户321</span>
+        </div>
+    </div>
+    
+    <div class="breadcrumb">
+        支持与帮助文档 > 当前页面
+    </div>
+    
+    <div class="main-container">
+        <div class="sidebar">
+            <div class="sidebar-section">
+                <div class="sidebar-title">宝塔咨询</div>
+                <div class="contact-info">
+                    <i>📞</i>
+                    <span>平台技术支持热线：010-6278-9898</span>
+                </div>
+                <div class="contact-button">
+                    <i>👤</i>
+                    <span>在线客服入口</span>
+                </div>
+            </div>
+            
+            <div class="sidebar-section">
+                <div class="sidebar-dropdown">新用户使用建议</div>
+                <div class="sidebar-item">
+                    <i>📝</i>
+                    <span>阅读"快速入门"章节</span>
+                </div>
+                <div class="sidebar-item">
+                    <i>🔍</i>
+                    <span>使用搜索功能查找相关解答</span>
+                </div>
+                <div class="sidebar-item">
+                    <i>📱</i>
+                    <span>未解决问题可通过客服渠道咨询</span>
+                </div>
+            </div>
+            
+            <div class="sidebar-section">
+                <div class="sidebar-dropdown">常见问题解答</div>
+                <div class="sidebar-item">
+                    <i>❓</i>
+                    <span>系统登录问题</span>
+                </div>
+                <div class="sidebar-item">
+                    <i>❓</i>
+                    <span>数据查询问题</span>
+                </div>
+                <div class="sidebar-item">
+                    <i>❓</i>
+                    <span>报告生成问题</span>
+                </div>
+                <div class="sidebar-item">
+                    <i>❓</i>
+                    <span>机器问题</span>
+                </div>
+            </div>
+            
+            <div class="sidebar-section">
+                <div class="sidebar-dropdown">平台功能详解</div>
+                <div class="sidebar-item">
+                    <i>📊</i>
+                    <span>地图操作指南</span>
+                </div>
+                <div class="sidebar-item active">
+                    <i>📊</i>
+                    <span>数据概览和资讯展示模块</span>
+                </div>
+                <div class="sidebar-item">
+                    <i>📊</i>
+                    <span>灾情监测模块</span>
+                </div>
+                <div class="sidebar-item">
+                    <i>📊</i>
+                    <span>灾情评估模块</span>
+                </div>
+            </div>
+        </div>
+        
+        <div class="main-content">
+            <div class="search-bar">
+                <input type="text" class="search-input" placeholder="请输入关键字搜索">
+                <button class="search-btn">🔍</button>
+            </div>
+            
+            <h1 class="content-title">数据概览和咨询展示模块</h1>
+            
+            <div class="content-section">
+                <h2 class="section-title">(四) 经济损失统计</h2>
+                <img src="image/小班结果监测1.png" alt="松材线虫病灾害图片" class="section-image">
+                <p class="section-content">
+                    经济损失统计板块综合多方数据，基于病害导致的木材减产损失（立木死亡导致的蓄积损失）、木材质量损失（病虫害导致木材降等）、防治成本（人工、药剂、设备等投入）和恢复费用（设施清理、造林及管护成本）等估算直接经济损失。以直观图表呈现各区域直接经济损失分布，助力用户全面评估灾害影响。数据动态更新，定期校准，保障准确性与时效性。
+                </p>
+                
+                <h3 class="section-title">一、直接经济损失的构成</h3>
+                <p class="section-content">
+                    直接经济损失主要包括以下四类：
+                </p>
+                <ul class="bullet-list">
+                    <li>木材减产损失（立木死亡导致的蓄积损失）</li>
+                    <li>木材质量损失（病虫害导致木材降等）</li>
+                    <li>防治成本（人工、药剂、设备等投入）</li>
+                    <li>恢复恢复费用（设施清理、造林及管护成本）</li>
+                </ul>
+                
+                <h3 class="section-title">二、具体计算方法与数据来源</h3>
+                <p class="section-content">
+                    1. 成片死亡损失<br>
+                    公式：损失=死亡面积×[林价（死亡林龄）-可利用材材价值]+新植造林费用+林地无效利用损失
+                </p>
+                
+                <div class="parameter-explanation">
+                    <div class="parameter-item">
+                        <strong>参数说明：</strong>
+                    </div>
+                    <div class="parameter-item">
+                        <strong>林价：</strong>按树种、林龄动态调整（例：马尾松林价参考《全国主要树种标准单位价值表》）。
+                    </div>
+                    <div class="parameter-item">
+                        <strong>可利用材材价值：</strong>根据木材等级损失率（30%-40%）折算。
+                    </div>
+                    <div class="parameter-item">
+                        <strong>新植造林费用：</strong>苗木、整地、抚木、机械等成本（参考林业局标准估算）。
+                    </div>
+                </div>
+            </div>
+        </div>
+        
+        <div class="toc">
+            <div class="toc-title">
+                <i>📑</i>本篇目录
+            </div>
+            <div class="toc-item ">(一) 区域概况</div>
+            <div class="toc-item">(二) 政策文件和新闻展示</div>
+            <div class="toc-item">(三) 受灾面积统计</div>
+            <div class="toc-item active">(四) 经济损失统计</div>
+        </div>
+    </div>
+    
+    <script>
+        // 获取DOM元素
+        const tocItems = document.querySelectorAll('.toc-item');
+        const sidebarItems = document.querySelectorAll('.sidebar-item');
+        const sidebarDropdowns = document.querySelectorAll('.sidebar-dropdown');
+        
+        // 目录项点击事件
+        tocItems.forEach(item => {
+            item.addEventListener('click', function() {
+                // 移除所有active类
+                tocItems.forEach(i => i.classList.remove('active'));
+                // 添加active类到当前点击项
+                this.classList.add('active');
+                
+                // 这里可以添加滚动到对应章节的逻辑
+                const sectionTitle = this.textContent;
+                console.log('跳转到章节:', sectionTitle);
+            });
+        });
+        
+        // 侧边栏项点击事件
+        sidebarItems.forEach(item => {
+            item.addEventListener('click', function() {
+                // 移除所有active类
+                sidebarItems.forEach(i => i.classList.remove('active'));
+                // 添加active类到当前点击项
+                this.classList.add('active');
+                
+                // 这里可以添加页面切换逻辑
+                const page = this.textContent.trim();
+                console.log('切换到页面:', page);
+            });
+        });
+        
+        // 侧边栏下拉菜单点击事件
+        sidebarDropdowns.forEach(dropdown => {
+            dropdown.addEventListener('click', function() {
+                // 切换下拉菜单的展开/折叠状态
+                const nextItems = [];
+                let nextElement = this.nextElementSibling;
+                
+                while (nextElement && nextElement.classList.contains('sidebar-item')) {
+                    nextItems.push(nextElement);
+                    nextElement = nextElement.nextElementSibling;
+                }
+                
+                nextItems.forEach(item => {
+                    item.style.display = item.style.display === 'none' ? 'block' : 'none';
+                });
+            });
+        });
+        
+        // 搜索功能
+        const searchInput = document.querySelector('.search-input');
+        const searchBtn = document.querySelector('.search-btn');
+        
+        searchBtn.addEventListener('click', function() {
+            const keyword = searchInput.value.trim();
+            if (keyword) {
+                // 这里可以添加搜索逻辑
+                alert('搜索关键词: ' + keyword);
+            } else {
+                alert('请输入搜索关键词');
+            }
+        });
+        
+        // 回车键触发搜索
+        searchInput.addEventListener('keypress', function(e) {
+            if (e.key === 'Enter') {
+                searchBtn.click();
+            }
+        });
+    </script>
+</body>
+</html>

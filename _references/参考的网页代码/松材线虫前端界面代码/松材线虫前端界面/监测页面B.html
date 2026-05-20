@@ -1,0 +1,490 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>清远市松材线虫病灾害监测预警系统</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+            font-family: "Microsoft YaHei", sans-serif;
+        }
+        
+        body {
+            overflow: hidden;
+        }
+        
+        .header {
+            background-color: #0a6aa1;
+            color: white;
+            height: 70px;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            padding: 0 20px;
+            background-image: linear-gradient(to right, #0a6aa1, #0a6aa1 70%, #0a6aa1), 
+                              url('data:image/svg+xml;utf8,<svg xmlns="http://www.w3.org/2000/svg" width="100%" height="100%"><path d="M0,10 Q50,20 100,10 T200,10" stroke="%23ffffff20" fill="none" stroke-width="2"/><path d="M0,30 Q50,40 100,30 T200,30" stroke="%23ffffff20" fill="none" stroke-width="2"/></svg>');
+            background-size: cover;
+            position: relative;
+        }
+        
+        .header h1 {
+            font-size: 24px;
+            font-weight: bold;
+        }
+        
+        .user-info {
+            display: flex;
+            align-items: center;
+            gap: 10px;
+        }
+        
+        .user-info img {
+            width: 40px;
+            height: 40px;
+            border-radius: 50%;
+            background-color: #fff;
+        }
+        
+        .help-link {
+            margin-right: 20px;
+            color: #ccc;
+            text-decoration: none;
+        }
+        
+        .sidebar {
+            width: 60px;
+            background-color: #0a6aa1;
+            height: calc(100vh - 70px);
+            float: left;
+            color: white;
+            text-align: center;
+        }
+        
+        .sidebar-item {
+            padding: 15px 0;
+            cursor: pointer;
+            border-bottom: 1px solid rgba(255, 255, 255, 0.1);
+        }
+        
+        .sidebar-item.active {
+            background-color: #0c5a86;
+        }
+        
+        .main-content {
+            height: calc(100vh - 70px);
+            margin-left: 60px;
+            position: relative;
+            background-color: #f0f6fb;
+            background-image: url('image/底图3.png');
+        }
+        
+        .filter-container {
+            width: 300px;
+            padding: 20px;
+        }
+        
+        .filter-item {
+            margin-bottom: 15px;
+        }
+        
+        .filter-item label {
+            display: block;
+            margin-bottom: 5px;
+            font-size: 14px;
+            color: #333;
+        }
+        
+        .filter-item select,
+        .filter-item input {
+            width: 100%;
+            padding: 8px 10px;
+            border: 1px solid #ddd;
+            border-radius: 4px;
+            font-size: 14px;
+            color: #666;
+        }
+        
+        .confirm-btn {
+            width: 100%;
+            padding: 10px;
+            background-color: #1e88e5;
+            color: white;
+            border: none;
+            border-radius: 4px;
+            font-size: 14px;
+            cursor: pointer;
+            transition: background-color 0.3s;
+        }
+        
+        .confirm-btn:hover {
+            background-color: #1976d2;
+        }
+        
+        .map-container {
+            position: absolute;
+            top: 50%;
+            left: 50%;
+            transform: translate(-50%, -50%);
+            width: 70%;
+            height: 80%;
+            /* 这里预留地图位置，您可以自行设置背景图或添加地图组件 */
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 18px;
+        }
+        
+        .map-image {
+            max-width: 100%;
+            max-height: 100%;
+            object-fit: contain;
+        }
+        
+        /* 右侧小班列表样式 */
+        .list-container {
+            width: 280px;
+            background-color: #fff;
+            border-left: 0px solid #ddd;
+            flex-direction: column;
+            height: 70%;
+            position: fixed;
+            right: 0;
+            top: 100px;
+        }
+        
+        .search-container {
+            padding: 20px;
+            border-bottom: 1px solid #eee;
+        }
+        
+        .search-box {
+            display: flex;
+            align-items: center;
+            border: 1px solid #ddd;
+            border-radius: 20px;
+            padding: 5px 15px;
+            background-color: #f9f9f9;
+        }
+        
+        .search-input {
+            flex: 1;
+            border: none;
+            outline: none;
+            padding: 5px;
+            background-color: transparent;
+            font-size: 14px;
+        }
+        
+        .search-icon {
+            color: #999;
+            cursor: pointer;
+        }
+        
+        .list-header {
+            background-color: #7dd3f7;
+            color: #333;
+            padding: 10px 15px;
+            font-weight: bold;
+            text-align: center;
+            font-size: 16px;
+        }
+        
+        .list-content {
+            flex: 1;
+            overflow-y: auto;
+            /* 调整以下属性让元素变小 */
+            width: 100%; /* 宽度变小 */
+            height: 60%; /* 高度变小 */
+            font-size: 14px; /* 字体大小变小 */
+        }
+        
+        .list-item {
+            padding: 15px;
+            border-bottom: 1px solid #eee;
+            cursor: pointer;
+            transition: background-color 0.2s;
+        }
+        
+        .list-item:hover {
+            background-color: #f5f5f5;
+        }
+        
+        .list-item.selected {
+            background-color: #e3f2fd;
+            border-left: 4px solid #1e88e5;
+        }
+        
+        .item-id {
+            font-weight: bold;
+            margin-bottom: 5px;
+        }
+        
+        .item-location {
+            color: #666;
+            font-size: 14px;
+        }
+        
+        .action-button {
+            margin: 15px;
+            padding: 10px;
+            background-color: #1e88e5;
+            color: white;
+            border: none;
+            border-radius: 4px;
+            font-size: 14px;
+            cursor: pointer;
+            transition: background-color 0.3s;
+            text-align: center;
+        }
+        
+        .action-button:hover {
+            background-color: #1976d2;
+        }
+        
+        /* 响应式设计 */
+        @media (max-width: 1200px) {
+            .filter-container, .list-container {
+                width: 250px;
+            }
+        }
+        
+        @media (max-width: 768px) {
+            .header h1 {
+                font-size: 18px;
+            }
+            
+            .main-content {
+                flex-direction: column;
+            }
+            
+            .filter-container, .list-container {
+                width: 100%;
+                height: auto;
+            }
+            
+            .map-container {
+                height: 300px;
+            }
+        }
+    </style>
+</head>
+<body>
+    <div class="header">
+        <h1>清远市松材线虫病灾害监测预警系统</h1>
+        <div class="user-info">
+            <a href="#" class="help-link" onclick="window.location.href='支持与帮助文档.html'">? 支持与帮助文档</a>
+            <img src="data:image/svg+xml;utf8,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><circle cx='50' cy='50' r='40' fill='%23ddd'/><circle cx='50' cy='40' r='15' fill='%23aaa'/><path d='M25,85 Q50,65 75,85' fill='%23aaa'/></svg>" alt="用户头像">
+            <span>用户321</span>
+        </div>
+    </div>
+    
+    <div class="sidebar">
+        <div class="sidebar-item" data-page="home"
+            onclick="window.location.href='首页.html'">
+            首<br>页
+        </div>
+        <div class="sidebar-item active" data-page="monitor"
+            onclick="window.location.href='监测页面A.html'">
+            灾<br>情<br>监<br>测
+        </div>
+        <div class="sidebar-item" data-page="evaluate"
+            onclick="window.location.href='灾情评估A.html'">
+            灾<br>情<br>评<br>估
+        </div>
+        <div class="sidebar-item" data-page="warning"
+            onclick="window.location.href='预警界面A.html'">
+            灾<br>情<br>预<br>警
+        </div>
+        <div class="sidebar-item" data-page="model"
+            onclick="window.location.href='大模型咨询.html'">
+            大<br>模<br>型<br>咨<br>询
+        </div>
+    </div>
+    
+    <div class="main-content">
+        <div class="filter-container">
+            <div class="filter-item">
+                <label for="date">请选择监测时间：</label>
+                <input type="date" id="date" name="date">
+            </div>
+            <div class="filter-item">
+                <label for="region">请选择县区：</label>
+                <select id="region" name="region">
+                    <option value="">请选择县区</option>
+                    <option value="阳山县">阳山县</option>
+                    <option value="清城区">清城区</option>
+                    <option value="清新区">清新区</option>
+                    <option value="佛冈县">佛冈县</option>
+                    <option value="连山县">连山县</option>
+                    <option value="连南县">连南县</option>
+                    <option value="英德市">英德市</option>
+                    <option value="连州市">连州市</option>
+                </select>
+            </div>
+            <button class="confirm-btn" id="confirmBtn">确认</button>
+        </div>
+        
+        <div class="map-container">
+            <!-- 地图区域，使用占位图 -->
+            <img src="image/监测图2.png" alt="地图" class="map-image">
+        </div>
+        
+        <div class="list-container">
+            <div class="search-container">
+                <div class="search-box">
+                    <input type="text" class="search-input" placeholder="输入小班编号进行搜索" id="searchInput">
+                    <span class="search-icon">🔍</span>
+                </div>
+            </div>
+            
+            <div class="list-header">
+                小班列表
+            </div>
+            
+            <div class="list-content" id="listContent">
+                <!-- 列表项将通过JavaScript动态生成 -->
+            </div>
+            
+            <div class="action-button" id="monitorBtn" onclick="window.location.href='监测页面C.html'">监测</div>
+        </div>
+    </div>
+    
+    <script>
+        // 小班数据
+        const smallGroupData = [
+            { id: '小班00001', location: '阳山县' },
+            { id: '小班00002', location: '阳山县' },
+            { id: '小班00003', location: '阳山县' },
+            { id: '小班00004', location: '阳山县' },
+            { id: '小班00005', location: '阳山县' },
+            { id: '小班00006', location: '阳山县' },
+            { id: '小班00007', location: '阳山县' },
+            { id: '小班00008', location: '阳山县' },
+            { id: '小班00009', location: '阳山县' },
+            { id: '小班00010', location: '阳山县' },
+            { id: '小班00011', location: '清城区' },
+            { id: '小班00012', location: '清城区' },
+            { id: '小班00013', location: '清城区' },
+            { id: '小班00014', location: '清新区' },
+            { id: '小班00015', location: '清新区' },
+
+        ];
+        
+        // 当前选中的小班ID
+        let selectedGroupId = null;
+        
+        // 渲染小班列表
+        function renderSmallGroups(groups) {
+            const listContent = document.getElementById('listContent');
+            listContent.innerHTML = '';
+            
+            if (groups.length === 0) {
+                listContent.innerHTML = '<div class="list-item">没有找到匹配的小班</div>';
+                return;
+            }
+            
+            groups.forEach(group => {
+                const listItem = document.createElement('div');
+                listItem.className = 'list-item';
+                if (group.id === selectedGroupId) {
+                    listItem.classList.add('selected');
+                }
+                
+                listItem.innerHTML = `
+                    <div class="item-id">${group.id}</div>
+                    <div class="item-location">${group.location}</div>
+                `;
+                
+                listItem.addEventListener('click', () => {
+                    // 移除所有选中状态
+                    document.querySelectorAll('.list-item').forEach(item => {
+                        item.classList.remove('selected');
+                    });
+                    
+                    // 添加选中状态
+                    listItem.classList.add('selected');
+                    selectedGroupId = group.id;
+                    
+                    // 可以在这里添加选中后的操作，例如更新地图显示
+                    console.log('选中小班:', group.id, group.location);
+                });
+                
+                listContent.appendChild(listItem);
+            });
+        }
+        
+        // 初始化页面
+        function initPage() {
+            // 渲染初始列表
+            renderSmallGroups(smallGroupData);
+            
+            // 搜索功能
+            const searchInput = document.getElementById('searchInput');
+            searchInput.addEventListener('input', () => {
+                const searchTerm = searchInput.value.toLowerCase();
+                const filteredGroups = smallGroupData.filter(group => 
+                    group.id.toLowerCase().includes(searchTerm) || 
+                    group.location.toLowerCase().includes(searchTerm)
+                );
+                renderSmallGroups(filteredGroups);
+            });
+            
+            // 监测按钮点击事件
+            
+            
+            // 确认按钮点击事件
+            const confirmBtn = document.getElementById('confirmBtn');
+            confirmBtn.addEventListener('click', () => {
+                const date = document.getElementById('date').value;
+                const region = document.getElementById('region').value;
+                
+                if (!date) {
+                    alert('请选择监测时间');
+                    return;
+                }
+                
+                if (!region) {
+                    alert('请选择县区');
+                    return;
+                }
+                
+                // 根据选择的县区筛选小班列表
+                const filteredGroups = smallGroupData.filter(group => 
+                    group.location === region
+                );
+                renderSmallGroups(filteredGroups);
+                
+                console.log('查询参数:', { date, region });
+            });
+            
+            // 侧边栏点击事件
+            const sidebarItems = document.querySelectorAll('.sidebar-item');
+            sidebarItems.forEach(item => {
+                item.addEventListener('click', function() {
+                    // 移除所有active类
+                    sidebarItems.forEach(i => i.classList.remove('active'));
+                    // 添加active类到当前点击项
+                    this.classList.add('active');
+                    
+                    // 这里可以添加页面切换逻辑
+                    const page = this.getAttribute('data-page');
+                    console.log('切换到页面:', page);
+                });
+            });
+            
+            // 初始化日期为今天
+            const today = new Date();
+            const year = today.getFullYear();
+            const month = String(today.getMonth() + 1).padStart(2, '0');
+            const day = String(today.getDate()).padStart(2, '0');
+            document.getElementById('date').value = `${year}-${month}-${day}`;
+        }
+        
+        // 页面加载完成后初始化
+        window.addEventListener('DOMContentLoaded', initPage);
+    </script>
+</body>
+</html>

@@ -1,71 +1,114 @@
 <template>
   <div class="login-page">
-    <div class="login-card">
-      <!-- Logo 区域 -->
-      <div class="login-header">
-        <div class="logo-icon"><img src="/logo.png" alt="松海护航" class="login-logo" /></div>
-        <h1 class="system-title">松海护航</h1>
-        <p class="system-subtitle">松材线虫监测预警平台</p>
+    <!-- ══════ 顶部白色导航条 ══════ -->
+    <header class="top-bar">
+      <div class="top-left">
+        <img src="/logo.png" alt="logo" class="top-logo" />
+        <span class="top-title">松海护航</span>
+        <span class="top-subtitle">松材线虫监测预警平台</span>
       </div>
+      <div class="top-right">
+        <span class="top-link">平台简介</span>
+        <span class="top-link">技术支持</span>
+      </div>
+    </header>
 
-      <!-- 登录表单 -->
-      <el-form
-        ref="formRef"
-        :model="form"
-        :rules="rules"
-        class="login-form"
-        @keyup.enter="handleLogin"
-      >
-        <el-form-item prop="username">
-          <el-input
-            v-model="form.username"
-            placeholder="用户名"
-            size="large"
-            :prefix-icon="User"
-            autocomplete="username"
-          />
-        </el-form-item>
+    <!-- ══════ 中间主体区（视频背景 + 登录框）══════ -->
+    <main class="main-area">
+      <!-- 背景视频（循环，静音） -->
+      <video
+        ref="bgVideo"
+        class="bg-video"
+        :src="currentVideo"
+        autoplay
+        muted
+        loop
+        playsinline
+        @ended="switchVideo"
+      />
+      <!-- 视频叠加暗色遮罩 -->
+      <div class="video-overlay" />
 
-        <el-form-item prop="password">
-          <el-input
-            v-model="form.password"
-            type="password"
-            placeholder="密码"
-            size="large"
-            :prefix-icon="Lock"
-            show-password
-            autocomplete="current-password"
-          />
-        </el-form-item>
+      <!-- 登录框（偏左放置） -->
+      <div class="login-card">
+        <div class="card-header">
+          <h2 class="card-title">用户登录</h2>
+          <p class="card-desc">欢迎使用松材线虫智能监测预警平台</p>
+        </div>
 
-        <el-button
-          type="primary"
-          size="large"
-          :loading="loading"
-          class="login-btn"
-          @click="handleLogin"
+        <el-form
+          ref="formRef"
+          :model="form"
+          :rules="rules"
+          class="login-form"
+          @keyup.enter="handleLogin"
         >
-          {{ loading ? '登录中...' : '登 录' }}
-        </el-button>
-      </el-form>
+          <el-form-item prop="username">
+            <el-input
+              v-model="form.username"
+              placeholder="请输入用户名"
+              size="large"
+              :prefix-icon="User"
+            />
+          </el-form-item>
+          <el-form-item prop="password">
+            <el-input
+              v-model="form.password"
+              type="password"
+              placeholder="请输入密码"
+              size="large"
+              :prefix-icon="Lock"
+              show-password
+            />
+          </el-form-item>
 
-      <p class="login-hint">示例账号（点击快速填入）：</p>
-      <div class="demo-accounts">
-        <div class="demo-row" v-for="acc in demoAccounts" :key="acc.username" @click="fillDemo(acc)">
-          <span class="demo-user">{{ acc.username }}</span>
-          <span class="demo-role">{{ acc.label }}</span>
+          <div class="form-options">
+            <el-checkbox v-model="rememberMe" label="记住账号" size="small" />
+            <router-link to="/register" class="register-link">注册新账号</router-link>
+          </div>
+
+          <el-button
+            type="primary"
+            size="large"
+            :loading="loading"
+            class="login-btn"
+            @click="handleLogin"
+          >
+            {{ loading ? '登录中...' : '登 录' }}
+          </el-button>
+        </el-form>
+
+        <!-- 示例账号快捷填入 -->
+        <div class="demo-section">
+          <div class="demo-title">演示账号 <span class="demo-hint">（点击快速填入）</span></div>
+          <div class="demo-grid">
+            <div v-for="acc in demoAccounts" :key="acc.username" class="demo-item" @click="fillDemo(acc)">
+              <span class="demo-name">{{ acc.username }}</span>
+              <span class="demo-role">{{ acc.label }}</span>
+            </div>
+          </div>
         </div>
       </div>
-      <div class="register-link">
-        <span>没有账号？</span>
-        <router-link to="/register">立即注册</router-link>
+    </main>
+
+    <!-- ══════ 底部深灰信息条 ══════ -->
+    <footer class="bottom-bar">
+      <div class="footer-left">
+        <span>© 2025 松海护航技术团队 版权所有</span>
+        <span class="footer-sep">|</span>
+        <span>ICP备案号：赣ICP备2025001234号-1</span>
       </div>
-    </div>
+      <div class="footer-right">
+        <span>技术支持：400-8888-6789</span>
+        <span class="footer-sep">|</span>
+        <span>service@pinewilt-guard.cn</span>
+      </div>
+    </footer>
   </div>
 </template>
 
 <script setup lang="ts">
-import { ref, reactive } from 'vue'
+import { ref, reactive, onMounted } from 'vue'
 import { useRouter } from 'vue-router'
 import { ElMessage, type FormInstance, type FormRules } from 'element-plus'
 import { User, Lock } from '@element-plus/icons-vue'
@@ -75,15 +118,28 @@ const router = useRouter()
 const authStore = useAuthStore()
 const formRef = ref<FormInstance>()
 const loading = ref(false)
+const rememberMe = ref(false)
+const bgVideo = ref<HTMLVideoElement>()
 
+// ── 视频切换逻辑（3个视频循环） ───────────────────────────────
+const videos = ['/videos/bg-video-1.mp4', '/videos/bg-video-2.mp4', '/videos/bg-video-3.mp4']
+const currentVideoIdx = ref(Math.floor(Math.random() * videos.length))
+const currentVideo = ref(videos[currentVideoIdx.value])
+
+function switchVideo() {
+  currentVideoIdx.value = (currentVideoIdx.value + 1) % videos.length
+  currentVideo.value = videos[currentVideoIdx.value]
+}
+
+// ── 表单逻辑 ─────────────────────────────────────────────────
 const form = reactive({ username: '', password: '' })
 
 const demoAccounts = [
-  { username: 'admin',      password: 'Admin@2024', label: '系统管理员（全部权限）' },
-  { username: 'engineer',   password: 'Test@2024',  label: '遥感工程师（监测+数据）' },
-  { username: 'manager',    password: 'Test@2024',  label: '林场管理员（业务+巡护）' },
-  { username: 'leader',     password: 'Test@2024',  label: '林业局领导（决策+报告）' },
-  { username: 'researcher', password: 'Test@2024',  label: '科研人员（脱敏数据）' },
+  { username: 'admin',      password: 'Admin@2024', label: '系统管理员' },
+  { username: 'engineer',   password: 'Test@2024',  label: '遥感工程师' },
+  { username: 'manager',    password: 'Test@2024',  label: '林场管理员' },
+  { username: 'leader',     password: 'Test@2024',  label: '林业局领导' },
+  { username: 'researcher', password: 'Test@2024',  label: '科研人员' },
 ]
 
 function fillDemo(acc: typeof demoAccounts[0]) {
@@ -114,148 +170,293 @@ async function handleLogin() {
     loading.value = false
   }
 }
+
+onMounted(() => {
+  // 如果视频文件不存在也不报错，背景会显示纯色兜底
+})
 </script>
 
 <style scoped>
 .login-page {
+  display: flex;
+  flex-direction: column;
   width: 100%;
   height: 100vh;
+  overflow: hidden;
+}
+
+/* ══════ 顶部白色导航条 ══════ */
+.top-bar {
+  height: 60px;
+  background: #ffffff;
   display: flex;
   align-items: center;
-  justify-content: center;
-  background: var(--color-bg-base);
-  background-image:
-    radial-gradient(ellipse at 20% 50%, rgba(0, 212, 255, 0.06) 0%, transparent 60%),
-    radial-gradient(ellipse at 80% 20%, rgba(0, 100, 200, 0.08) 0%, transparent 50%);
+  justify-content: space-between;
+  padding: 0 32px;
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.06);
+  position: relative;
+  z-index: 10;
+  flex-shrink: 0;
 }
 
-.login-card {
-  width: 380px;
-  padding: 40px 36px;
-  background: var(--color-bg-panel);
-  border: 1px solid var(--color-border-light);
-  border-radius: 8px;
-  box-shadow: 0 0 40px rgba(0, 212, 255, 0.1);
+.top-left {
+  display: flex;
+  align-items: center;
+  gap: 12px;
 }
 
-.login-header {
-  text-align: center;
-  margin-bottom: 32px;
-}
-
-.logo-icon {
-  margin-bottom: 8px;
-}
-
-.login-logo {
-  width: 64px;
-  height: 64px;
+.top-logo {
+  width: 36px;
+  height: 36px;
   object-fit: contain;
 }
 
-.system-title {
-  font-size: 24px;
-  font-weight: 700;
-  color: var(--color-accent);
-  text-shadow: 0 0 16px var(--color-accent-glow);
+.top-title {
+  font-size: 22px;
+  font-weight: 800;
+  color: #1a5c3a;
   letter-spacing: 2px;
+  font-family: "PingFang SC", "Microsoft YaHei", sans-serif;
 }
 
-.system-subtitle {
+.top-subtitle {
   font-size: 13px;
-  color: var(--color-text-secondary);
-  margin-top: 4px;
+  color: #666;
+  border-left: 1px solid #ddd;
+  padding-left: 12px;
+  margin-left: 4px;
+}
+
+.top-right {
+  display: flex;
+  gap: 20px;
+}
+
+.top-link {
+  font-size: 13px;
+  color: #555;
+  cursor: pointer;
+  transition: color 0.2s;
+}
+
+.top-link:hover {
+  color: #1a5c3a;
+}
+
+/* ══════ 中间主体区 ══════ */
+.main-area {
+  flex: 1;
+  position: relative;
+  display: flex;
+  align-items: center;
+  justify-content: flex-start;
+  padding-left: 8%;
+  overflow: hidden;
+}
+
+/* 背景视频 */
+.bg-video {
+  position: absolute;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+  z-index: 0;
+}
+
+.video-overlay {
+  position: absolute;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 100%;
+  background: rgba(0, 20, 10, 0.35);
+  z-index: 1;
+}
+
+/* 如果视频加载失败，显示渐变背景兜底 */
+.main-area::before {
+  content: '';
+  position: absolute;
+  inset: 0;
+  background: linear-gradient(135deg, #0d3320 0%, #1a4a2e 40%, #0a2918 100%);
+  z-index: -1;
+}
+
+/* ══════ 登录卡片 ══════ */
+.login-card {
+  position: relative;
+  z-index: 5;
+  width: 400px;
+  background: #ffffff;
+  border-radius: 12px;
+  padding: 36px 32px 28px;
+  box-shadow: 0 20px 60px rgba(0, 0, 0, 0.3), 0 0 0 1px rgba(255,255,255,0.1);
+}
+
+.card-header {
+  margin-bottom: 24px;
+}
+
+.card-title {
+  font-size: 22px;
+  font-weight: 700;
+  color: #1a1a1a;
+  margin-bottom: 6px;
+}
+
+.card-desc {
+  font-size: 13px;
+  color: #888;
 }
 
 .login-form {
+  margin-bottom: 0;
+}
+
+.form-options {
   display: flex;
-  flex-direction: column;
-  gap: 4px;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 16px;
+}
+
+.register-link {
+  font-size: 13px;
+  color: #1a5c3a;
+  text-decoration: none;
+}
+
+.register-link:hover {
+  text-decoration: underline;
 }
 
 .login-btn {
   width: 100%;
-  margin-top: 8px;
   height: 44px;
-  font-size: 16px;
+  font-size: 15px;
+  font-weight: 600;
   letter-spacing: 4px;
-  background: linear-gradient(135deg, #00b4d8, #0077b6);
+  background: linear-gradient(135deg, #1a7a4c, #0d5c35);
   border: none;
+  border-radius: 6px;
 }
 
-.login-hint {
-  text-align: center;
-  color: var(--color-text-muted);
+.login-btn:hover {
+  background: linear-gradient(135deg, #1e8f58, #12704a);
+}
+
+/* 示例账号 */
+.demo-section {
+  margin-top: 20px;
+  padding-top: 16px;
+  border-top: 1px solid #eee;
+}
+
+.demo-title {
   font-size: 12px;
-  margin-top: 16px;
+  color: #999;
   margin-bottom: 8px;
 }
 
-.demo-accounts {
-  display: flex;
-  flex-direction: column;
-  gap: 4px;
-  margin-bottom: 12px;
+.demo-hint {
+  color: #bbb;
 }
 
-.demo-row {
+.demo-grid {
+  display: grid;
+  grid-template-columns: repeat(2, 1fr);
+  gap: 6px;
+}
+
+.demo-item {
   display: flex;
   justify-content: space-between;
-  align-items: center;
   padding: 6px 10px;
-  background: var(--color-bg-card);
-  border: 1px solid var(--color-border);
+  background: #f8f9fa;
+  border: 1px solid #eee;
   border-radius: 4px;
   cursor: pointer;
-  transition: all 0.2s;
+  transition: all 0.15s;
+}
+
+.demo-item:hover {
+  border-color: #1a5c3a;
+  background: #f0f7f4;
+}
+
+.demo-name {
   font-size: 12px;
-}
-
-.demo-row:hover {
-  border-color: var(--color-accent);
-  background: rgba(0, 212, 255, 0.06);
-}
-
-.demo-user {
-  color: var(--color-accent);
   font-weight: 600;
+  color: #1a5c3a;
   font-family: monospace;
 }
 
 .demo-role {
-  color: var(--color-text-muted);
   font-size: 11px;
+  color: #999;
 }
 
-.register-link {
-  text-align: center;
-  margin-top: 10px;
-  font-size: 13px;
-  color: var(--color-text-muted);
+/* ══════ 底部深灰信息条 ══════ */
+.bottom-bar {
+  height: 44px;
+  background: #2c2c2c;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 0 32px;
+  flex-shrink: 0;
 }
 
-.register-link a {
-  color: var(--color-accent);
-  text-decoration: none;
-  margin-left: 4px;
+.footer-left,
+.footer-right {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  font-size: 12px;
+  color: #999;
 }
 
-.register-link a:hover {
-  text-decoration: underline;
+.footer-sep {
+  color: #555;
 }
 
-/* Element Plus 输入框深色适配 */
+/* ══════ Element Plus 白底表单样式覆盖 ══════ */
 :deep(.el-input__wrapper) {
-  background: var(--color-bg-card);
-  border-color: var(--color-border);
-  box-shadow: none;
+  background: #f8f9fa !important;
+  border-color: #e0e0e0 !important;
+  box-shadow: none !important;
 }
-:deep(.el-input__inner) {
-  color: var(--color-text-primary);
+
+:deep(.el-input__wrapper:hover) {
+  border-color: #1a5c3a !important;
 }
-:deep(.el-input__wrapper:hover),
+
 :deep(.el-input__wrapper.is-focus) {
-  border-color: var(--color-accent) !important;
-  box-shadow: 0 0 0 1px var(--color-accent) !important;
+  border-color: #1a5c3a !important;
+  box-shadow: 0 0 0 1px rgba(26, 92, 58, 0.2) !important;
+}
+
+:deep(.el-input__inner) {
+  color: #333 !important;
+}
+
+:deep(.el-input__inner::placeholder) {
+  color: #bbb !important;
+}
+
+:deep(.el-checkbox__label) {
+  color: #666 !important;
+  font-size: 13px !important;
+}
+
+:deep(.el-checkbox__input.is-checked .el-checkbox__inner) {
+  background-color: #1a5c3a !important;
+  border-color: #1a5c3a !important;
+}
+
+:deep(.el-form-item__error) {
+  color: #e53935;
 }
 </style>

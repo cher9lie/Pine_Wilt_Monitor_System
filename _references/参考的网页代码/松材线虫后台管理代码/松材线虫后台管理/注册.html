@@ -1,0 +1,289 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>用户注册</title>
+    <style>
+        /* 全局样式 */
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: Arial, sans-serif;
+            background-image: url(image/登录注册底图.png);
+            background-size: cover;
+            background-position: center;
+            background-repeat: no-repeat;
+            display: flex;
+            min-height: 100vh;
+        }
+
+        /* 整体布局容器 */
+       .main-container {
+            display: flex;
+            width: 100%;
+            justify-content: flex-end;
+        }
+/* 右侧注册表单区域 */
+.right-section {
+            width: 400px;
+            background-color: rgba(173, 216, 230, 0.8);
+            padding: 40px;
+            display: flex;
+            flex-direction: column;
+            justify-content: center;
+            margin-right: 150px;
+            margin-top: 40px;
+            margin-bottom: 40px;
+        }
+
+        .form-title {
+            font-size: 24px;
+            font-weight: bold;
+            text-align: center;
+            margin-bottom: 30px;
+            color: #333;
+        }
+
+        .form-group {
+            margin-bottom: 20px;
+            position: relative;
+        }
+
+        .form-control {
+            width: 100%;
+            height: 45px;
+            padding: 10px 15px;
+            padding-left: 40px;
+            border: 1px solid #ddd;
+            border-radius: 5px;
+            font-size: 14px;
+            transition: all 0.3s;
+        }
+
+        .form-control:focus {
+            border-color: #0a4c81;
+            outline: none;
+            box-shadow: 0 0 0 2px rgba(10, 76, 129, 0.2);
+        }
+
+        .form-icon {
+            position: absolute;
+            left: 15px;
+            top: 50%;
+            transform: translateY(-50%);
+            color: #999;
+        }
+
+        .password-toggle {
+            position: absolute;
+            right: 15px;
+            top: 50%;
+            transform: translateY(-50%);
+            cursor: pointer;
+            color: #999;
+        }
+
+        .captcha-group {
+            display: flex;
+            gap: 10px;
+        }
+
+        .captcha-input {
+            flex: 1;
+        }
+
+        .captcha-image {
+            width: 120px;
+            height: 45px;
+            border-radius: 5px;
+            cursor: pointer;
+        }
+
+        .register-btn {
+            width: 100%;
+            height: 45px;
+            background-color: #0a4c81;
+            color: white;
+            border: none;
+            border-radius: 5px;
+            font-size: 16px;
+            font-weight: bold;
+            cursor: pointer;
+            margin-top: 10px;
+            transition: background-color 0.3s;
+        }
+
+        .register-btn:hover {
+            background-color: #0c3d66;
+        }
+
+        .form-footer {
+            margin-top: 20px;
+            text-align: center;
+            font-size: 14px;
+            color: #666;
+        }
+
+        .form-footer a {
+            color: #0a4c81;
+            text-decoration: none;
+            margin-left: 5px;
+        }
+
+        .form-footer a:hover {
+            text-decoration: underline;
+        }
+
+        /* 响应式设计 */
+        @media (max-width: 1000px) {
+            .container {
+                width: 100%;
+                height: auto;
+                flex-direction: column;
+            }
+
+            .left-section {
+                padding: 30px;
+                min-height: 300px;
+            }
+
+            .right-section {
+                width: 100%;
+            }
+        }
+
+        @media (max-width: 480px) {
+            .right-section {
+                padding: 20px;
+            }
+        }
+    </style>
+</head>
+
+<body>
+    <div class="main-container">
+         <!-- 右侧注册表单区域 -->
+         <div class="right-section">
+            <h2 class="form-title">用户注册</h2>
+            
+            <form id="registerForm">
+                <!-- 用户名/手机号输入框 -->
+                <div class="form-group">
+                    <span class="form-icon">👤</span>
+                    <input type="text" class="form-control" placeholder="请输入用户名或手机号" required>
+                </div>
+                
+                <!-- 密码输入框 -->
+                <div class="form-group">
+                    <span class="form-icon">🔒</span>
+                    <input type="password" class="form-control" placeholder="请输入密码" required>
+                    <span class="password-toggle" onclick="togglePassword(this)">👁️</span>
+                </div>
+                
+                <!-- 确认密码输入框 -->
+                <div class="form-group">
+                    <span class="form-icon">🔒</span>
+                    <input type="password" class="form-control" placeholder="请再次输入您的密码" required>
+                    <span class="password-toggle" onclick="togglePassword(this)">👁️</span>
+                </div>
+                
+                <!-- 用户类型选择 -->
+                <div class="form-group">
+                    <select class="form-control">
+                        <option value="" disabled selected>请选择注册管理员类型</option>
+                        <option value="finance">财务管理员</option>
+                        <option value="admin">用户管理员</option>
+                        <option value="user">数据管理员</option>
+                        <option value="finance">客服人员</option>
+                        <option value="finance">系统管理员</option>
+                    </select>
+                </div>
+                
+                <!-- 验证码 -->
+                <div class="form-group captcha-group">
+                    <input type="text" class="form-control captcha-input" placeholder="请输入验证码" required>
+                    <img src="image/验证码.png" class="captcha-image" onclick="refreshCaptcha()">
+                </div>
+                
+                <!-- 注册按钮 -->
+                <button type="button" class="register-btn" onclick="window.location.href='登录.html';">注册</button>
+                
+                <!-- 表单底部链接 -->
+                <div class="form-footer">
+                    新用户注册 | <a href="#">忘记密码问题?</a>
+                </div>
+            </form>
+        </div>
+    </div>
+    <script src="https://kit.fontawesome.com/a076d05399.js"></script>
+    <script>
+        // 密码显示隐藏功能
+        const togglePassword1 = document.getElementById('togglePassword1');
+        const password1 = document.getElementById('password1');
+
+        const togglePassword2 = document.getElementById('togglePassword2');
+        const password2 = document.getElementById('password2');
+
+        togglePassword1.addEventListener('click', function (e) {
+            e.preventDefault();
+            if (password1.type === 'password') {
+                password1.type = 'text';
+                this.classList.remove('far', 'fa-eye');
+                this.classList.add('fas', 'fa-eye-slash');
+            } else {
+                password1.type = 'password';
+                this.classList.remove('fas', 'fa-eye-slash');
+                this.classList.add('far', 'fa-eye');
+            }
+        });
+
+        togglePassword2.addEventListener('click', function (e) {
+            e.preventDefault();
+            if (password2.type === 'password') {
+                password2.type = 'text';
+                this.classList.remove('far', 'fa-eye');
+                this.classList.add('fas', 'fa-eye-slash');
+            } else {
+                password2.type = 'password';
+                this.classList.remove('fas', 'fa-eye-slash');
+                this.classList.add('far', 'fa-eye');
+            }
+        });
+// 表单提交简单验证（示例）
+const form = document.querySelector('form');
+        form.addEventListener('submit', function (e) {
+            e.preventDefault();
+            const emailOrPhone = this.elements[0].value;
+            const pass1 = this.elements[1].value;
+            const pass2 = this.elements[2].value;
+            if (emailOrPhone === '') {
+                alert('请输入邮箱或手机号');
+                return;
+            }
+            if (pass1 === '') {
+                alert('请输入密码');
+                return;
+            }
+            if (pass2 === '') {
+                alert('请再次输入密码');
+                return;
+            }
+            if (pass1!== pass2) {
+                alert('两次输入的密码不一致');
+                return;
+            }
+            // 这里可以添加发送注册请求到服务器的代码（如使用fetch或axios）
+            //console.log('表单验证通过，可进行注册操作');
+            // 跳转到登录页面，需将 'login.html' 替换为实际登录页面的路径
+        });
+    </script>
+</body>
+
+</html>
+    
