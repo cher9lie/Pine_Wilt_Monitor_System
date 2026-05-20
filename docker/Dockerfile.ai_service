@@ -20,9 +20,11 @@ ENV GDAL_CONFIG=/usr/bin/gdal-config
 ENV CPLUS_INCLUDE_PATH=/usr/include/gdal
 ENV C_INCLUDE_PATH=/usr/include/gdal
 
-# 安装 Python 依赖
+# 安装 Python 依赖（先升级 pip + 预装 numpy 避免 rasterio 源码编译问题）
 COPY ai_service/requirements.txt .
-RUN pip install --no-cache-dir -r requirements.txt
+RUN pip install --upgrade pip setuptools wheel && \
+    pip install --no-cache-dir numpy && \
+    pip install --no-cache-dir -r requirements.txt
 
 # 复制应用代码
 COPY ai_service/ .
