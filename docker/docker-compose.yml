@@ -10,13 +10,12 @@ services:
   # ══════════════════════════════════════════════════════════════
 
   nginx:
-    image: nginx:alpine
+    build:
+      context: ..
+      dockerfile: docker/Dockerfile.frontend
     container_name: pine_nginx
     ports:
-      - "18080:80"   # 使用 18080 避免与服务器 80 端口冲突
-    volumes:
-      - ../frontend/dist:/usr/share/nginx/html:ro   # 前端打包产物
-      - ./nginx/nginx.conf:/etc/nginx/nginx.conf:ro  # Nginx 配置
+      - "18080:80"
     depends_on:
       - backend
     networks:

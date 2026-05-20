@@ -1,0 +1,30 @@
+# ============================================================
+# 前端构建 + Nginx 静态服务（ARM64 兼容）
+# 多阶段构建：先用 Node 打包，再用 Nginx 服务静态文件
+# ============================================================
+
+# ── Stage 1: 前端打包 ─────────────────────────────────────────
+FROM node:20-alpine AS builder
+WORKDIR /app
+
+COPY frontend/package.json frontend/package-lock.json ./
+RUN npm ci
+
+COPY frontend/ ./
+RUN npm run build
+
+# ── Stage 2: Nginx 静态服务 ───────────────────────────────────
+FROM nginx:alpine AS runner
+
+# 复制打包产物到 Nginx 默认静态目录
+COPY --from=builder /app/dist /usr/share/nginx/html
+
+# 复制自定义 Nginx 配置
+COPY docker/nginx/nginx.conf /etc/nginx/nginx.conf
+
+EXPOSE 80
+
+HEALTHCHECK --interval=30s --timeout=5s \
+  CMD wget -qO- http://localhost/ || exit 1
+
+CMD ["nginx", "-g", "daemon off;"]
