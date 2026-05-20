@@ -1,8 +1,0 @@
-# 此目录用于存放 YOLOv8 ONNX 模型文件
-# 请将训练好的模型文件放置于此：yolov8_pine_best.onnx
-#
-# 训练完成后导出命令（在本地 RTX 3060 上执行）：
-#   yolo export model=best.pt format=onnx opset=12 imgsz=640
-#
-# 然后将 best.onnx 重命名并复制到此目录：
-#   cp best.onnx ai_service/models/yolov8_pine_best.onnx

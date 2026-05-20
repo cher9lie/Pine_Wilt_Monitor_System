@@ -1,12 +1,19 @@
+# ============================================================
+# 仅排除：环境变量 + 参考文件 + Node 缓存 + Python 缓存
+# 视频、模型、图片等资源文件全部上传
+# ============================================================
+
 # 环境变量（绝对不入库）
 .env
 .env.local
 .env.*.local
 
+# 参考文件（仅本地使用，不上传）
+_references/
+
 # Node.js
 node_modules/
 dist/
-build/
 *.log
 npm-debug.log*
 
@@ -20,11 +27,6 @@ venv/
 .pytest_cache/
 .mypy_cache/
 
-# AI 模型文件（体积大，通过 scp 单独部署）
-ai_service/models/*.onnx
-ai_service/models/*.pt
-ai_service/models/*.pth
-
 # 编辑器
 .vscode/
 .idea/
@@ -35,13 +37,8 @@ ai_service/models/*.pth
 .DS_Store
 Thumbs.db
 
-# Docker 数据卷（本地开发）
-docker/volumes/
-
-# 证书文件
-docker/nginx/ssl/*.pem
-docker/nginx/ssl/*.key
-docker/nginx/ssl/*.crt
+# Vite 缓存
+frontend/.vite/
 
 # 临时文件
 *.tmp
