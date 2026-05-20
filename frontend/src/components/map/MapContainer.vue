@@ -26,6 +26,10 @@ let map: Map | null = null
 const DEMO_OFFSET_DISTANCE_KM = 30
 const DEMO_OFFSET_BEARING_DEG = 135
 const DEMO_BASE_CENTER: [number, number] = [114.935, 25.831]
+const EARTH_RADIUS_METERS = 6371008.8
+const FULL_CIRCLE_DEG = 360
+const HALF_CIRCLE_DEG = 180
+const NORMALIZE_LNG_OFFSET = FULL_CIRCLE_DEG + HALF_CIRCLE_DEG
 const DEMO_ZONES: { name: string; coordinates: [number, number][][] }[] = [
   {
     name: '章贡区水西松林监测区',
@@ -568,7 +572,7 @@ function offsetLngLat([lng, lat]: [number, number]): [number, number] {
   const bearingRad = (DEMO_OFFSET_BEARING_DEG * Math.PI) / 180
   const latRad = (lat * Math.PI) / 180
   const lngRad = (lng * Math.PI) / 180
-  const angularDistance = distanceMeters / 6371008.8
+  const angularDistance = distanceMeters / EARTH_RADIUS_METERS
   const sinLat = Math.sin(latRad)
   const cosLat = Math.cos(latRad)
   const sinAngular = Math.sin(angularDistance)
@@ -578,7 +582,7 @@ function offsetLngLat([lng, lat]: [number, number]): [number, number] {
   const y = Math.sin(bearingRad) * sinAngular * cosLat
   const x = cosAngular - sinLat * sinLat2
   const lng2 = lngRad + Math.atan2(y, x)
-  const normalizedLng = ((lng2 * 180) / Math.PI + 540) % 360 - 180
+  const normalizedLng = ((lng2 * 180) / Math.PI + NORMALIZE_LNG_OFFSET) % FULL_CIRCLE_DEG - HALF_CIRCLE_DEG
   return [normalizedLng, (lat2 * 180) / Math.PI]
 }
 
