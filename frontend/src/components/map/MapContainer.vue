@@ -403,6 +403,79 @@ watch(
 )
 
 // ── 赣州示例数据：监测区多边形 + 病木黄色点 ─────────────────────
+const DEMO_SHIFT_DISTANCE_KM = 30
+const DEMO_SHIFT_BEARING_DEG = 135
+
+const DEMO_ZONES = [
+  { minLng: 114.905, maxLng: 114.958, minLat: 25.810, maxLat: 25.858, count: 38 },
+  { minLng: 114.960, maxLng: 114.994, minLat: 25.839, maxLat: 25.869, count: 22 },
+]
+
+const DEMO_AREAS = [
+  {
+    name: '章贡区水西松林监测区',
+    coordinates: [
+      [114.908, 25.852], [114.932, 25.858], [114.951, 25.847],
+      [114.958, 25.831], [114.948, 25.815], [114.927, 25.809],
+      [114.908, 25.818], [114.901, 25.835], [114.908, 25.852],
+    ],
+  },
+  {
+    name: '章贡区东部林场监测区',
+    coordinates: [
+      [114.962, 25.862], [114.978, 25.869], [114.991, 25.861],
+      [114.994, 25.848], [114.983, 25.839], [114.967, 25.843],
+      [114.960, 25.852], [114.962, 25.862],
+    ],
+  },
+]
+
+const DEMO_CENTER = (() => {
+  const bounds = DEMO_ZONES.reduce(
+    (acc, zone) => ({
+      minLng: Math.min(acc.minLng, zone.minLng),
+      maxLng: Math.max(acc.maxLng, zone.maxLng),
+      minLat: Math.min(acc.minLat, zone.minLat),
+      maxLat: Math.max(acc.maxLat, zone.maxLat),
+    }),
+    {
+      minLng: DEMO_ZONES[0].minLng,
+      maxLng: DEMO_ZONES[0].maxLng,
+      minLat: DEMO_ZONES[0].minLat,
+      maxLat: DEMO_ZONES[0].maxLat,
+    }
+  )
+  return {
+    lng: (bounds.minLng + bounds.maxLng) / 2,
+    lat: (bounds.minLat + bounds.maxLat) / 2,
+  }
+})()
+
+const DEMO_SHIFT = (() => {
+  const bearingRad = (DEMO_SHIFT_BEARING_DEG * Math.PI) / 180
+  const kmPerDegLat = 111.32
+  const deltaLat = (DEMO_SHIFT_DISTANCE_KM * Math.cos(bearingRad)) / kmPerDegLat
+  const deltaLng = (DEMO_SHIFT_DISTANCE_KM * Math.sin(bearingRad)) / (kmPerDegLat * Math.cos(DEMO_CENTER.lat * Math.PI / 180))
+  return { deltaLng, deltaLat }
+})()
+
+function shiftLngLat(lng: number, lat: number): [number, number] {
+  return [lng + DEMO_SHIFT.deltaLng, lat + DEMO_SHIFT.deltaLat]
+}
+
+const SHIFTED_DEMO_ZONES = DEMO_ZONES.map(zone => ({
+  ...zone,
+  minLng: zone.minLng + DEMO_SHIFT.deltaLng,
+  maxLng: zone.maxLng + DEMO_SHIFT.deltaLng,
+  minLat: zone.minLat + DEMO_SHIFT.deltaLat,
+  maxLat: zone.maxLat + DEMO_SHIFT.deltaLat,
+}))
+
+const SHIFTED_DEMO_AREAS = DEMO_AREAS.map(area => ({
+  ...area,
+  coordinates: area.coordinates.map(([lng, lat]) => shiftLngLat(lng, lat)),
+}))
+
 function initDemoLayers() {
   if (!map) return
 
@@ -411,32 +484,14 @@ function initDemoLayers() {
     type: 'geojson',
     data: {
       type: 'FeatureCollection',
-      features: [
-        {
-          type: 'Feature',
-          geometry: {
-            type: 'Polygon',
-            coordinates: [[
-              [114.908, 25.852], [114.932, 25.858], [114.951, 25.847],
-              [114.958, 25.831], [114.948, 25.815], [114.927, 25.809],
-              [114.908, 25.818], [114.901, 25.835], [114.908, 25.852],
-            ]],
-          },
-          properties: { name: '章贡区水西松林监测区' },
+      features: SHIFTED_DEMO_AREAS.map(area => ({
+        type: 'Feature',
+        geometry: {
+          type: 'Polygon',
+          coordinates: [area.coordinates],
         },
-        {
-          type: 'Feature',
-          geometry: {
-            type: 'Polygon',
-            coordinates: [[
-              [114.962, 25.862], [114.978, 25.869], [114.991, 25.861],
-              [114.994, 25.848], [114.983, 25.839], [114.967, 25.843],
-              [114.960, 25.852], [114.962, 25.862],
-            ]],
-          },
-          properties: { name: '章贡区东部林场监测区' },
-        },
-      ],
+        properties: { name: area.name },
+      })),
     },
   })
 
@@ -520,14 +575,8 @@ function generateDemoPoints(): GeoJSON.Feature[] {
     { type: 'suspected',  label: '疑似',   conf: () => (65 + Math.random() * 20).toFixed(1) },
   ]
 
-  // 两个区域的边界框
-  const zones = [
-    { minLng: 114.905, maxLng: 114.958, minLat: 25.810, maxLat: 25.858, count: 38 },
-    { minLng: 114.960, maxLng: 114.994, minLat: 25.839, maxLat: 25.869, count: 22 },
-  ]
-
   const features: GeoJSON.Feature[] = []
-  zones.forEach(zone => {
+  SHIFTED_DEMO_ZONES.forEach(zone => {
     for (let i = 0; i < zone.count; i++) {
       const lng = zone.minLng + Math.random() * (zone.maxLng - zone.minLng)
       const lat = zone.minLat + Math.random() * (zone.maxLat - zone.minLat)
