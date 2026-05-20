@@ -583,15 +583,18 @@ function offsetLngLat([lng, lat]: [number, number]): [number, number] {
   const cosLat = Math.cos(latRad)
   const sinAngular = Math.sin(angularDistance)
   const cosAngular = Math.cos(angularDistance)
+  // 目标纬度（球面测地线终点公式）
   const sinLat2 = sinLat * cosAngular + cosLat * sinAngular * Math.cos(bearingRad)
   const lat2 = Math.asin(sinLat2)
   const y = Math.sin(bearingRad) * sinAngular * cosLat
   const x = cosAngular - sinLat * sinLat2
+  // 目标经度（结合起点经度）
   const lng2 = lngRad + Math.atan2(y, x)
   return [normalizeLng((lng2 * 180) / Math.PI), (lat2 * 180) / Math.PI]
 }
 
 function normalizeLng(lngDeg: number): number {
+  // 先包裹到 [0, 360) 再平移到 [-180, 180)
   const wrapped = ((lngDeg + HALF_CIRCLE_DEG) % FULL_CIRCLE_DEG + FULL_CIRCLE_DEG) % FULL_CIRCLE_DEG
   return wrapped - HALF_CIRCLE_DEG
 }
