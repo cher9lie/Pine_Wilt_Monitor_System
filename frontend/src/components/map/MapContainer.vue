@@ -27,7 +27,7 @@ const DEMO_OFFSET_DISTANCE_KM = 30
 const DEMO_OFFSET_BEARING_DEG = 135
 const DEMO_BASE_CENTER: [number, number] = [114.935, 25.831]
 const DEG_TO_RAD = Math.PI / 180
-const KM_PER_DEG_LAT = 111
+const KM_PER_DEG_LAT = 111 // Approximate km per degree of latitude
 const DEMO_ZONES: { name: string; coordinates: [number, number][][] }[] = [
   {
     name: '章贡区水西松林监测区',
