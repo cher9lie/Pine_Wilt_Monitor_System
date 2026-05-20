@@ -406,7 +406,7 @@ watch(
 const DEMO_SHIFT_DISTANCE_KM = 30
 const DEMO_SHIFT_BEARING_DEG = 135
 const DEG_TO_RAD = Math.PI / 180
-const KM_PER_DEG_LAT = 111.32 // 约等于赤道处每一纬度对应的公里数
+const KM_PER_DEG_LAT = 111.32 // 约等于每一纬度对应的公里数
 
 const DEMO_ZONES = [
   { minLng: 114.905, maxLng: 114.958, minLat: 25.810, maxLat: 25.858, count: 38 },
@@ -453,10 +453,11 @@ const DEMO_CENTER = (() => {
   }
 })()
 
+const DEMO_CENTER_LAT = DEMO_CENTER.lat
 const DEMO_SHIFT = (() => {
   const bearingRad = DEMO_SHIFT_BEARING_DEG * DEG_TO_RAD
   const deltaLat = (DEMO_SHIFT_DISTANCE_KM * Math.cos(bearingRad)) / KM_PER_DEG_LAT
-  const deltaLng = (DEMO_SHIFT_DISTANCE_KM * Math.sin(bearingRad)) / (KM_PER_DEG_LAT * Math.cos(DEMO_CENTER.lat * DEG_TO_RAD))
+  const deltaLng = (DEMO_SHIFT_DISTANCE_KM * Math.sin(bearingRad)) / (KM_PER_DEG_LAT * Math.cos(DEMO_CENTER_LAT * DEG_TO_RAD))
   return { deltaLng, deltaLat }
 })()
 
@@ -464,13 +465,17 @@ function shiftLngLat(lng: number, lat: number): [number, number] {
   return [lng + DEMO_SHIFT.deltaLng, lat + DEMO_SHIFT.deltaLat]
 }
 
-const SHIFTED_DEMO_ZONES = DEMO_ZONES.map(zone => ({
-  ...zone,
-  minLng: zone.minLng + DEMO_SHIFT.deltaLng,
-  maxLng: zone.maxLng + DEMO_SHIFT.deltaLng,
-  minLat: zone.minLat + DEMO_SHIFT.deltaLat,
-  maxLat: zone.maxLat + DEMO_SHIFT.deltaLat,
-}))
+const SHIFTED_DEMO_ZONES = DEMO_ZONES.map(zone => {
+  const [minLng, minLat] = shiftLngLat(zone.minLng, zone.minLat)
+  const [maxLng, maxLat] = shiftLngLat(zone.maxLng, zone.maxLat)
+  return {
+    ...zone,
+    minLng,
+    maxLng,
+    minLat,
+    maxLat,
+  }
+})
 
 const SHIFTED_DEMO_AREAS = DEMO_AREAS.map(area => ({
   ...area,
