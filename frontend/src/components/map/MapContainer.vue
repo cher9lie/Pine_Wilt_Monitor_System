@@ -579,7 +579,7 @@ function offsetLngLat([lng, lat]: [number, number]): [number, number] {
   const deltaEastKm = DEMO_OFFSET_DISTANCE_KM * Math.sin(bearingRad)
   const deltaLat = deltaNorthKm / KM_PER_DEG_LAT
   const cosLat = Math.cos(latRad)
-  const safeCosLat = Math.abs(cosLat) < 1e-6 ? 1e-6 * Math.sign(cosLat || 1) : cosLat
+  const safeCosLat = Math.abs(cosLat) < 1e-6 ? (cosLat >= 0 ? 1e-6 : -1e-6) : cosLat
   const kmPerDegLon = KM_PER_DEG_LAT * safeCosLat
   const deltaLng = deltaEastKm / kmPerDegLon
   return [lng + deltaLng, lat + deltaLat]
