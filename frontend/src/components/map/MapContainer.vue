@@ -570,6 +570,7 @@ function offsetPolygon(coordinates: [number, number][][]): [number, number][][] 
 
 /**
  * 采用简化经纬度换算，将经纬度按指定方位与距离偏移。
+ * 注意：该方法假设局部平面，适用于小范围近似偏移。
  */
 function offsetLngLat([lng, lat]: [number, number]): [number, number] {
   const bearingRad = DEMO_OFFSET_BEARING_DEG * DEG_TO_RAD
