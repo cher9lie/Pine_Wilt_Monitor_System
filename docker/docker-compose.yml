@@ -85,7 +85,8 @@ services:
   # ══════════════════════════════════════════════════════════════
 
   postgres:
-    image: postgis/postgis:15-3.4
+    image: postgis/postgis:15-3.5
+    platform: linux/arm64/v8
     container_name: pine_postgres
     environment:
       POSTGRES_DB: ${POSTGRES_DB:-pine_wilt_db}
