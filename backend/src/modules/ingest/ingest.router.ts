@@ -1,5 +1,6 @@
 import { Router, Request, Response, NextFunction } from 'express'
 import path from 'path'
+import type { FeatureCollection, Geometry, Feature } from 'geojson'
 import { tiffUpload, TIFF_UPLOAD_DIR } from './upload.config'
 import {
   saveImageRecord,
@@ -189,11 +190,11 @@ ingestRouter.get('/images/:id/detections', async (req: Request, res: Response, n
       [id]
     )
 
-    const geojson: GeoJSON.FeatureCollection = {
+    const geojson: FeatureCollection = {
       type: 'FeatureCollection',
       features: rows.map((row: Record<string, unknown>) => ({
-        type: 'Feature',
-        geometry: row.geometry as GeoJSON.Geometry,
+        type: 'Feature' as const,
+        geometry: row.geometry as Geometry,
         properties: {
           id: row.id,
           confidence: row.confidence,

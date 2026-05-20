@@ -1,5 +1,6 @@
 import path from 'path'
 import axios from 'axios'
+import type { FeatureCollection, Point } from 'geojson'
 import { query, queryOne, withTransaction } from '../../shared/db/pool'
 import { config } from '../../config/env'
 import { logger } from '../../shared/logger'
@@ -8,8 +9,8 @@ import { TIFF_UPLOAD_DIR } from './upload.config'
 export interface ImageRecord {
   id: string
   filename: string
-  local_path: string       // 服务器本地绝对路径
-  relative_path: string    // 相对于 uploads/tiffs/ 的路径（前端可用）
+  local_path: string       // 服务器本地绝对路�?
+  relative_path: string    // 相对�?uploads/tiffs/ 的路径（前端可用�?
   source_type: string
   status: string
   created_at: Date
@@ -18,12 +19,12 @@ export interface ImageRecord {
 export interface DetectionResult {
   image_id: string
   detection_count: number
-  geojson: GeoJSON.FeatureCollection
+  geojson: FeatureCollection
   bbox: [number, number, number, number] | null  // [minLng, minLat, maxLng, maxLat]
 }
 
 /**
- * 保存上传的 TIFF 文件元数据到数据库
+ * 保存上传�?TIFF 文件元数据到数据�?
  */
 export async function saveImageRecord(params: {
   filename: string
@@ -44,10 +45,10 @@ export async function saveImageRecord(params: {
 
   // relative_path 不在 SQL 中返回，手动附加
   if (row) {
-    (row as Record<string, unknown>).relative_path = relativePath
+    ;(row as unknown as Record<string, unknown>).relative_path = relativePath
   }
 
-  if (!row) throw new Error('数据库写入失败')
+  if (!row) throw new Error('Database write failed')
 
   logger.info('Image record saved', {
     imageId: row.id,
@@ -61,7 +62,7 @@ export async function saveImageRecord(params: {
 /**
  * 触发 Python AI 推理服务
  * 调用 POST http://ai_service:8000/infer
- * 返回 GeoJSON FeatureCollection（病死木点位）
+ * 返回 GeoJSON FeatureCollection（病死木点位�?
  */
 export async function triggerInference(imageId: string, localPath: string): Promise<DetectionResult> {
   // 更新状态为 preprocessing
@@ -75,7 +76,7 @@ export async function triggerInference(imageId: string, localPath: string): Prom
 
     const response = await axios.post<{
       detection_count: number
-      geojson: GeoJSON.FeatureCollection
+      geojson: FeatureCollection
       bbox: [number, number, number, number] | null
       task_id: string
     }>(
@@ -85,12 +86,12 @@ export async function triggerInference(imageId: string, localPath: string): Prom
         image_path: localPath,
         confidence_threshold: config.inferConfidenceThreshold,
       },
-      { timeout: 5 * 60 * 1000 } // 5 分钟超时（大图推理耗时较长）
+      { timeout: 5 * 60 * 1000 } // 5 分钟超时（大图推理耗时较长�?
     )
 
     const { detection_count, geojson, bbox } = response.data
 
-    // 更新状态为 inferred，写入 bbox
+    // 更新状态为 inferred，写�?bbox
     await query(
       `UPDATE remote_sensing_images
        SET status = 'inferred',
@@ -110,7 +111,7 @@ export async function triggerInference(imageId: string, localPath: string): Prom
 
     return { image_id: imageId, detection_count, geojson, bbox }
   } catch (err) {
-    // 推理失败，更新状态
+    // 推理失败，更新状�?
     await query(
       `UPDATE remote_sensing_images SET status = 'failed', updated_at = NOW() WHERE id = $1`,
       [imageId]
@@ -121,11 +122,11 @@ export async function triggerInference(imageId: string, localPath: string): Prom
 }
 
 /**
- * 将 AI 推理结果（GeoJSON 点位）批量写入 PostGIS disease_trees 表
+ * �?AI 推理结果（GeoJSON 点位）批量写�?PostGIS disease_trees �?
  */
 export async function persistDetections(
   imageId: string,
-  geojson: GeoJSON.FeatureCollection,
+  geojson: FeatureCollection,
   uploadedBy: string
 ): Promise<number> {
   if (!geojson.features || geojson.features.length === 0) return 0
@@ -136,7 +137,7 @@ export async function persistDetections(
     for (const feature of geojson.features) {
       if (feature.geometry.type !== 'Point') continue
 
-      const [lng, lat] = (feature.geometry as GeoJSON.Point).coordinates
+      const [lng, lat] = (feature.geometry as Point).coordinates
       const props = feature.properties ?? {}
 
       await client.query(
