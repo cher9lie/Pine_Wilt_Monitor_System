@@ -1,0 +1,29 @@
+{
+  "name": "pine-wilt-frontend",
+  "version": "1.0.0",
+  "description": "松海护航 - 松材线虫监测预警平台前端",
+  "type": "module",
+  "scripts": {
+    "dev": "vite",
+    "build": "vue-tsc && vite build",
+    "preview": "vite preview",
+    "lint": "eslint src --ext .vue,.ts,.tsx"
+  },
+  "dependencies": {
+    "vue": "^3.4.29",
+    "vue-router": "^4.3.3",
+    "pinia": "^2.1.7",
+    "axios": "^1.7.2",
+    "maplibre-gl": "^4.4.1",
+    "echarts": "^5.5.0",
+    "vue-echarts": "^6.7.3",
+    "element-plus": "^2.7.6",
+    "@element-plus/icons-vue": "^2.3.1"
+  },
+  "devDependencies": {
+    "@vitejs/plugin-vue": "^5.0.5",
+    "typescript": "^5.4.5",
+    "vite": "^5.3.1",
+    "vue-tsc": "^2.0.21"
+  }
+}
