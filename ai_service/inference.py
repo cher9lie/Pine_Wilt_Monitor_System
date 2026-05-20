@@ -24,13 +24,21 @@ from utils.geo_utils import (
 
 logger = logging.getLogger(__name__)
 
-# YOLOv8 COCO 类别（推理时用于过滤，实际使用自定义类别）
-# 自定义模型类别：0=dead_tree, 1=discolored, 2=suspected
-CLASS_LABELS = {
-    0: "dead_tree",
-    1: "discolored",
-    2: "suspected",
-}
+# YOLOv8 类别映射
+# 如果使用自定义训练模型：0=dead_tree, 1=discolored, 2=suspected
+# 如果使用通用 COCO 预训练模型（80类），将所有检测结果统一映射为 suspected
+# 后续替换为自训练松材线虫专用模型后，改回 3 类映射即可
+USING_CUSTOM_MODEL = False  # ← 改为 True 当你使用自训练模型时
+
+if USING_CUSTOM_MODEL:
+    CLASS_LABELS = {
+        0: "dead_tree",
+        1: "discolored",
+        2: "suspected",
+    }
+else:
+    # 通用模型：所有检测结果视为 "suspected"（疑似），人工后续复核
+    CLASS_LABELS = {i: "suspected" for i in range(80)}
 
 
 class YOLOv8ONNXInference:

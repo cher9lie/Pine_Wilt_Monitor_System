@@ -1,0 +1,43 @@
+# ============================================================
+# Python AI 推理服务 Dockerfile（ARM64 兼容，纯 CPU）
+# 基于 python:3.11-slim，安装 GDAL + ONNX Runtime
+# ============================================================
+
+FROM python:3.11-slim
+
+WORKDIR /app
+
+# 安装 GDAL 系统依赖（ARM64 Ubuntu/Debian 官方源支持）
+RUN apt-get update && apt-get install -y --no-install-recommends \
+    gdal-bin \
+    libgdal-dev \
+    libgomp1 \
+    curl \
+    && rm -rf /var/lib/apt/lists/*
+
+# 设置 GDAL 环境变量
+ENV GDAL_CONFIG=/usr/bin/gdal-config
+ENV CPLUS_INCLUDE_PATH=/usr/include/gdal
+ENV C_INCLUDE_PATH=/usr/include/gdal
+
+# 安装 Python 依赖
+COPY ai_service/requirements.txt .
+RUN pip install --no-cache-dir -r requirements.txt
+
+# 复制应用代码
+COPY ai_service/ .
+
+# 创建模型目录（用户通过 docker cp 或 volume 挂载注入 .onnx 文件）
+RUN mkdir -p /app/models
+
+# 安全：非 root 用户
+RUN addgroup --system appgroup && adduser --system --ingroup appgroup appuser
+RUN chown -R appuser:appgroup /app
+USER appuser
+
+EXPOSE 8000
+
+HEALTHCHECK --interval=30s --timeout=15s --start-period=60s \
+  CMD curl -f http://localhost:8000/health || exit 1
+
+CMD ["uvicorn", "main:app", "--host", "0.0.0.0", "--port", "8000", "--workers", "2"]

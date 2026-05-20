@@ -1,48 +1,134 @@
+# ============================================================
+# 「松海护航」完整部署编排 — 甲骨文 ARM64 服务器
+# 包含：基础设施 + 业务容器 + 统一网络
+# ============================================================
+
 services:
+
+  # ══════════════════════════════════════════════════════════════
+  # 业务容器
+  # ══════════════════════════════════════════════════════════════
+
+  nginx:
+    image: nginx:alpine
+    container_name: pine_nginx
+    ports:
+      - "18080:80"   # 使用 18080 避免与服务器 80 端口冲突
+    volumes:
+      - ../frontend/dist:/usr/share/nginx/html:ro   # 前端打包产物
+      - ./nginx/nginx.conf:/etc/nginx/nginx.conf:ro  # Nginx 配置
+    depends_on:
+      - backend
+    networks:
+      - pine_network
+    restart: unless-stopped
+
+  backend:
+    build:
+      context: ..
+      dockerfile: docker/Dockerfile.backend
+    container_name: pine_backend
+    environment:
+      NODE_ENV: production
+      PORT: 3000
+      DATABASE_URL: ${DATABASE_URL}
+      REDIS_URL: ${REDIS_URL}
+      JWT_SECRET: ${JWT_SECRET}
+      JWT_REFRESH_SECRET: ${JWT_REFRESH_SECRET}
+      JWT_EXPIRES_IN: ${JWT_EXPIRES_IN}
+      JWT_REFRESH_EXPIRES_IN: ${JWT_REFRESH_EXPIRES_IN}
+      MINIO_ENDPOINT: minio
+      MINIO_PORT: "9000"
+      MINIO_USE_SSL: "false"
+      MINIO_ACCESS_KEY: ${MINIO_ROOT_USER}
+      MINIO_SECRET_KEY: ${MINIO_ROOT_PASSWORD}
+      MINIO_BUCKET: ${MINIO_BUCKET}
+      AI_SERVICE_URL: http://ai_service:8000
+      INFER_CONFIDENCE_THRESHOLD: ${INFER_CONFIDENCE_THRESHOLD}
+      CORS_ORIGIN: ${CORS_ORIGIN}
+      INFLUXDB_URL: http://influxdb:8086
+      INFLUXDB_TOKEN: ${INFLUXDB_TOKEN}
+      INFLUXDB_ORG: ${INFLUXDB_ORG}
+      INFLUXDB_BUCKET: ${INFLUXDB_BUCKET}
+    depends_on:
+      postgres:
+        condition: service_healthy
+      redis:
+        condition: service_healthy
+    networks:
+      - pine_network
+    restart: unless-stopped
+
+  ai_service:
+    build:
+      context: ..
+      dockerfile: docker/Dockerfile.ai_service
+    container_name: pine_ai_service
+    environment:
+      DATABASE_URL: ${DATABASE_URL}
+      MINIO_ENDPOINT: minio:9000
+      MINIO_ACCESS_KEY: ${MINIO_ROOT_USER}
+      MINIO_SECRET_KEY: ${MINIO_ROOT_PASSWORD}
+      MODEL_PATH: /app/models/yolov8_pine_best.onnx
+      CONFIDENCE_THRESHOLD: ${INFER_CONFIDENCE_THRESHOLD}
+    volumes:
+      - ai_models:/app/models    # 挂载模型目录（持久化）
+    depends_on:
+      postgres:
+        condition: service_healthy
+    networks:
+      - pine_network
+    restart: unless-stopped
+
+  # ══════════════════════════════════════════════════════════════
+  # 基础设施容器
+  # ══════════════════════════════════════════════════════════════
+
   postgres:
     image: postgis/postgis:15-3.4
-    platform: linux/arm64
     container_name: pine_postgres
     environment:
-      POSTGRES_DB: pine_wilt_db
-      POSTGRES_USER: pine_user
-      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD:-pine_dev_password}
+      POSTGRES_DB: ${POSTGRES_DB:-pine_wilt_db}
+      POSTGRES_USER: ${POSTGRES_USER:-pine_admin}
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD}
     volumes:
       - postgres_data:/var/lib/postgresql/data
       - ./postgres/init.sql:/docker-entrypoint-initdb.d/init.sql:ro
     ports:
       - "5432:5432"
     healthcheck:
-      test: ["CMD-SHELL", "pg_isready -U pine_user -d pine_wilt_db"]
+      test: ["CMD-SHELL", "pg_isready -U ${POSTGRES_USER:-pine_admin} -d ${POSTGRES_DB:-pine_wilt_db}"]
       interval: 10s
       timeout: 5s
       retries: 5
+    networks:
+      - pine_network
     restart: unless-stopped
 
   redis:
     image: redis:7-alpine
-    platform: linux/arm64
     container_name: pine_redis
-    command: redis-server --requirepass ${REDIS_PASSWORD:-pine_redis_dev} --appendonly yes
+    command: redis-server --requirepass ${REDIS_PASSWORD} --appendonly yes --maxmemory 256mb --maxmemory-policy allkeys-lru
     volumes:
       - redis_data:/data
     ports:
       - "6379:6379"
     healthcheck:
-      test: ["CMD", "redis-cli", "-a", "${REDIS_PASSWORD:-pine_redis_dev}", "ping"]
+      test: ["CMD", "redis-cli", "-a", "${REDIS_PASSWORD}", "ping"]
       interval: 10s
       timeout: 5s
       retries: 5
+    networks:
+      - pine_network
     restart: unless-stopped
 
   minio:
     image: minio/minio:latest
-    platform: linux/arm64
     container_name: pine_minio
     command: server /data --console-address ":9001"
     environment:
-      MINIO_ROOT_USER: ${MINIO_ROOT_USER:-pine_admin}
-      MINIO_ROOT_PASSWORD: ${MINIO_ROOT_PASSWORD:-pine_minio_dev}
+      MINIO_ROOT_USER: ${MINIO_ROOT_USER:-pine_minio_admin}
+      MINIO_ROOT_PASSWORD: ${MINIO_ROOT_PASSWORD}
     volumes:
       - minio_data:/data
     ports:
@@ -53,42 +139,57 @@ services:
       interval: 30s
       timeout: 10s
       retries: 3
+    networks:
+      - pine_network
     restart: unless-stopped
 
   influxdb:
     image: influxdb:2.7-alpine
-    platform: linux/arm64
     container_name: pine_influxdb
     environment:
       DOCKER_INFLUXDB_INIT_MODE: setup
       DOCKER_INFLUXDB_INIT_USERNAME: ${INFLUXDB_USER:-pine_influx}
-      DOCKER_INFLUXDB_INIT_PASSWORD: ${INFLUXDB_PASSWORD:-pine_influx_dev}
-      DOCKER_INFLUXDB_INIT_ORG: pine-wilt
-      DOCKER_INFLUXDB_INIT_BUCKET: iot-sensors
-      DOCKER_INFLUXDB_INIT_ADMIN_TOKEN: ${INFLUXDB_TOKEN:-pine_influx_token_dev}
+      DOCKER_INFLUXDB_INIT_PASSWORD: ${INFLUXDB_PASSWORD}
+      DOCKER_INFLUXDB_INIT_ORG: ${INFLUXDB_ORG:-pine-wilt}
+      DOCKER_INFLUXDB_INIT_BUCKET: ${INFLUXDB_BUCKET:-iot-sensors}
+      DOCKER_INFLUXDB_INIT_ADMIN_TOKEN: ${INFLUXDB_TOKEN}
     volumes:
       - influxdb_data:/var/lib/influxdb2
     ports:
       - "8086:8086"
+    networks:
+      - pine_network
     restart: unless-stopped
 
   emqx:
     image: emqx/emqx:5.3.0
-    platform: linux/arm64
     container_name: pine_emqx
     environment:
-      EMQX_NODE__NAME: emqx@pine_emqx
+      EMQX_NODE__NAME: ${EMQX_NODE__NAME:-emqx@pine_emqx}
     volumes:
       - emqx_data:/opt/emqx/data
     ports:
       - "1883:1883"
       - "8083:8083"
       - "18083:18083"
+    networks:
+      - pine_network
     restart: unless-stopped
 
+# ══════════════════════════════════════════════════════════════
+# 统一网络
+# ══════════════════════════════════════════════════════════════
+networks:
+  pine_network:
+    driver: bridge
+
+# ══════════════════════════════════════════════════════════════
+# 持久化数据卷
+# ══════════════════════════════════════════════════════════════
 volumes:
   postgres_data:
   redis_data:
   minio_data:
   influxdb_data:
   emqx_data:
+  ai_models:     # AI 模型文件持久化（避免容器重建丢失）
